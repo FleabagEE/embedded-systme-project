@@ -1,0 +1,7 @@
+# Cartesian product; choices override corresponding baseline keys.
+base_config: configs/baseline.yaml
+parameters:
+  audio.n_mels: [40, 64]
+  model.conv_type: [SC, DW]
+  model.width: ['1', '5', '25', all]
+  audio.duration_sec: [1.0, 2.0]

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "required_identity": ["run_id", "effective_width", "duration_sec", "device", "software_backend", "benchmark_setup", "measurement_status"],
+  "optional_measurements": ["latency_ms", "peak_sram_bytes", "flash_bytes", "tensor_arena_bytes", "energy_mj"],
+  "measurement_status_values": ["not_measured", "measured", "failed"],
+  "policy": "Leave all measurements null until measured on the named device and backend."
+}
