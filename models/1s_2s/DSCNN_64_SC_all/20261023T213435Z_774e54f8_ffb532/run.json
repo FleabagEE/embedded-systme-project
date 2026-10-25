@@ -1,0 +1,104 @@
+{
+  "artifacts": [
+    "subnets/DSCNN_64_SC_1",
+    "subnets/DSCNN_64_SC_5",
+    "subnets/DSCNN_64_SC_25"
+  ],
+  "checkpoint": {
+    "best_epoch": 38,
+    "best_value": 0.6719771241830066,
+    "epochs_executed": 46,
+    "monitor": "val_accuracy",
+    "resume_supported": false,
+    "weight_path": "/Users/colin/Desktop/embedded_system/models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/shared_best.weights.h5"
+  },
+  "dataset_manifest": {
+    "class_mapping": {
+      "0": "air_conditioner",
+      "1": "car_horn",
+      "2": "children_playing",
+      "3": "dog_bark",
+      "4": "drilling",
+      "5": "engine_idling",
+      "6": "gun_shot",
+      "7": "jackhammer",
+      "8": "siren",
+      "9": "street_music"
+    },
+    "diagnostic_subset": false,
+    "metadata_path": "/Users/colin/sound_datasets/urbansound8k/metadata/UrbanSound8K.csv",
+    "metadata_sha256": "b207f7a53f9e5eb02a5dd71d58fb8b66c88c24c0637b926dc72d9d400a6a2354",
+    "split_counts_used": {
+      "train": 7079,
+      "val": 816
+    }
+  },
+  "first_training_batch": {
+    "batch_size": 32,
+    "data_source": "UrbanSound8K",
+    "logits_devices": {
+      "1": "/job:localhost/replica:0/task:0/device:CPU:0",
+      "25": "/job:localhost/replica:0/task:0/device:CPU:0",
+      "5": "/job:localhost/replica:0/task:0/device:CPU:0"
+    },
+    "selected_device": "/CPU:0"
+  },
+  "schema_version": 2,
+  "software_versions": {
+    "PyYAML": "6.0.3",
+    "executable": "/opt/miniconda3/envs/tinyml-tf/bin/python",
+    "git_commit": null,
+    "keras": "2.15.0",
+    "librosa": "0.11.0",
+    "numpy": "1.26.4",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.11.17 (main, Oct  1 2026, 20:09:52) [Clang 20.1.8 ]",
+    "requirements_lock_sha256": "91c6982b6763258442807c560fadd9a46a7fa89060d0e53f065260b4ba5b8317",
+    "runtime": {
+      "backend": "CPU",
+      "deterministic_requested": true,
+      "framework": "TensorFlow/Keras",
+      "gpu_execution_verified": false,
+      "physical_gpus": [
+        "/physical_device:GPU:0"
+      ],
+      "reason": "explicit CPU debugging option",
+      "requested_device": "cpu",
+      "selected_device": "/CPU:0",
+      "training_probe": {
+        "determinism_scope": "One fixed minibatch repeated before updating weights; not a full-run reproducibility guarantee.",
+        "deterministic_requested": true,
+        "gpu_execution_verified": false,
+        "gradient_devices": [
+          "/job:localhost/replica:0/task:0/device:CPU:0"
+        ],
+        "logits_devices": {
+          "1": "/job:localhost/replica:0/task:0/device:CPU:0",
+          "25": "/job:localhost/replica:0/task:0/device:CPU:0",
+          "5": "/job:localhost/replica:0/task:0/device:CPU:0"
+        },
+        "loss": 7.342405319213867,
+        "optimizer_iterations": 1,
+        "post_step_weight_sha256": "1f0c511351979c5dfb4a7699efc452d2a5b439f7a559a725ef81f5b4b0c16073",
+        "repeated_forward_and_gradients_bitwise_equal": true,
+        "selected_device": "/CPU:0",
+        "variable_devices": [
+          "/job:localhost/replica:0/task:0/device:CPU:0"
+        ],
+        "weights_changed": true
+      }
+    },
+    "scikit-learn": "1.9.1",
+    "soundfile": "0.14.0",
+    "source_sha256": "d11dbfae4da9cc3596b043ca6f1b66d7eede62b9eeed01a03fb7cd89be259cbf",
+    "tensorflow": "2.15.1",
+    "tensorflow-metal": "1.1.0"
+  },
+  "state": {
+    "data_source": "UrbanSound8K",
+    "epochs_executed": 46,
+    "held_out_test_evaluated": false,
+    "int8_exported": true,
+    "status": "complete"
+  }
+}

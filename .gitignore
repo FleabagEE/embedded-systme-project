@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+features/*
+!features/.gitkeep
+.pytest_cache/
