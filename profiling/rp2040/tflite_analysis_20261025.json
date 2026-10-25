@@ -1,6 +1,6 @@
 {
  "baseline": {
-  "path": "/root/m202a/crest/models/rp2040_bench/dscnn_us8k_min_int8/g_model.tflite",
+  "path": "FleabagEE/crest:models/rp2040_bench/dscnn_us8k_min_int8/g_model.tflite",
   "input": [
    1,
    201,
@@ -168,7 +168,7 @@
   ]
  },
  "SC1_1s": {
-  "path": "/root/m202a/embedded-systme-project/models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_1/exports/1s/int8.tflite",
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_1/exports/1s/int8.tflite",
   "input": [
    1,
    98,
@@ -286,7 +286,7 @@
   ]
  },
  "SC1_2s": {
-  "path": "/root/m202a/embedded-systme-project/models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_1/exports/2s/int8.tflite",
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_1/exports/2s/int8.tflite",
   "input": [
    1,
    198,
@@ -404,7 +404,7 @@
   ]
  },
  "SC5_1s": {
-  "path": "/root/m202a/embedded-systme-project/models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_5/exports/1s/int8.tflite",
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_5/exports/1s/int8.tflite",
   "input": [
    1,
    98,
@@ -522,7 +522,7 @@
   ]
  },
  "SC5_2s": {
-  "path": "/root/m202a/embedded-systme-project/models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_5/exports/2s/int8.tflite",
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_5/exports/2s/int8.tflite",
   "input": [
    1,
    198,
@@ -640,7 +640,7 @@
   ]
  },
  "SC25_1s": {
-  "path": "/root/m202a/embedded-systme-project/models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_25/exports/1s/int8.tflite",
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_25/exports/1s/int8.tflite",
   "input": [
    1,
    98,
@@ -758,7 +758,7 @@
   ]
  },
  "SC25_2s": {
-  "path": "/root/m202a/embedded-systme-project/models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_25/exports/2s/int8.tflite",
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_25/exports/2s/int8.tflite",
   "input": [
    1,
    198,

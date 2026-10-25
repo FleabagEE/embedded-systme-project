@@ -12,7 +12,7 @@ Latency and memory only; no energy measurement.
 | `rp2040_summary.csv` | One row per (model, board). The main table; columns below. |
 | `DSCNN_64_SC_{1,5,25}_{1s,2s}_int8_full_a<KiB>_<timestamp>.txt` | Raw results for each subnet's full run: header, memory, summary, then one line per timed run (`board=... model=... run=<k> invoke_us=<int> preprocess_us=-1 arena_used_bytes=<int> status=ok`) and the full serial log. `a<KiB>` is the compiled tensor-arena size. |
 | `dscnn_us8k_min_int8_20261024_170252.txt` | Same format, for the baseline: the smallest DS-CNN from CREST's UrbanSound8K search space (2 depthwise-separable blocks, 128 parameters, untrained, input 201x64). |
-| `tflite_analysis_20261025.json` | Static analysis of each `.tflite`: per-layer op, shapes, MACs and live activation bytes, total MACs, and peak activation memory. Paths inside are from the measurement host. |
+| `tflite_analysis_20261025.json` | Static analysis of each `.tflite`: per-layer op, shapes, MACs and live activation bytes, total MACs, and peak activation memory. Model paths are relative to this repo; the baseline's is prefixed `FleabagEE/crest:` because it lives in the CREST repo. |
 
 ## CSV columns
 
@@ -37,7 +37,7 @@ Latency and memory only; no energy measurement.
 | `clock_hz` | CPU clock: 125,000,000 Hz (see below). |
 | `arena_kb` | Compiled tensor-arena size in KiB (must be at least `arena_used_bytes`). |
 | `status` | `ok` for a successful run. |
-| `results_file` | Path of the raw file in the CREST repo; the same file name is in this folder. |
+| `results_file` | File name of the row's raw results file, in this folder. |
 
 Mapping to `profiling/schema.json`:
 - `effective_width` <- the subnet suffix
