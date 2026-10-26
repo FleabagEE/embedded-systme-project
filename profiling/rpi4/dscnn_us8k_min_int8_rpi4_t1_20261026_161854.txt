@@ -1,0 +1,19 @@
+# CREST Raspberry Pi 4 latency/memory result
+# generated_utc: 2026-10-26T23:18:54+00:00
+# board: rpi4  model: dscnn_us8k_min_int8  port: rpi4@<pi-host>
+# timed_runs: 100  warmup_runs: 5  preprocess_on_device: no (preprocess_us=-1)
+# ram_bytes = runner peak RSS increase from model load to the last run; flash_bytes = .tflite size
+#
+# summary:
+#   status=infeasible reason=warmup_invoke_failed
+#
+# raw per-run lines:
+board=rpi4 model=dscnn_us8k_min_int8 run=0 invoke_us=-1 preprocess_us=-1 arena_used_bytes=-1 status=infeasible reason=warmup_invoke_failed
+
+# environment:
+
+# full remote output:
+#   board=rpi4 model=dscnn_us8k_min_int8 run=0 invoke_us=-1 preprocess_us=-1 arena_used_bytes=-1 status=infeasible reason=warmup_invoke_failed
+#   error_detail=RuntimeError('failed to create XNNPACK runtimeNode number 10 (TfLiteXNNPackDelegate) failed to prepare.')
+#   remote_exit=2
+#   stderr: INFO: Created TensorFlow Lite XNNPACK delegate for CPU.

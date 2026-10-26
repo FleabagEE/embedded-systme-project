@@ -1,0 +1,233 @@
+# CREST Raspberry Pi 4 latency/memory result
+# generated_utc: 2026-10-26T23:19:56+00:00
+# board: rpi4  model: dscnn_us8k_min_int8  port: rpi4@<pi-host>
+# timed_runs: 100  warmup_runs: 5  preprocess_on_device: no (preprocess_us=-1)
+# ram_bytes = runner peak RSS increase from model load to the last run; flash_bytes = .tflite size
+#
+# summary:
+#   status=ok arena_kb=-1 arena_used_bytes=-1
+#   flash_bytes=5392 ram_bytes=10096640
+#   n=100 median_invoke_us=367.0 p95_invoke_us=380 min_invoke_us=366 max_invoke_us=401 mean_invoke_us=368.3
+#   p95 uses the nearest-rank method.
+#   threads=4 xnnpack=off runtime=ai_edge_litert@2.3.0 governor=performance cpu_cur_khz=1800000
+#   throttled_before=0x0 throttled_after=0x0 temp_before_c=48.7 temp_after_c=49.7 flags=none
+#
+# raw per-run lines:
+board=rpi4 model=dscnn_us8k_min_int8 run=1 invoke_us=372 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=2 invoke_us=368 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=3 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=4 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=5 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=6 invoke_us=382 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=7 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=8 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=9 invoke_us=371 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=10 invoke_us=368 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=11 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=12 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=13 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=14 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=15 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=16 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=17 invoke_us=386 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=18 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=19 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=20 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=21 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=22 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=23 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=24 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=25 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=26 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=27 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=28 invoke_us=401 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=29 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=30 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=31 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=32 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=33 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=34 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=35 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=36 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=37 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=38 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=39 invoke_us=378 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=40 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=41 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=42 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=43 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=44 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=45 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=46 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=47 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=48 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=49 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=50 invoke_us=383 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=51 invoke_us=368 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=52 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=53 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=54 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=55 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=56 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=57 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=58 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=59 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=60 invoke_us=380 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=61 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=62 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=63 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=64 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=65 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=66 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=67 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=68 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=69 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=70 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=71 invoke_us=376 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=72 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=73 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=74 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=75 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=76 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=77 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=78 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=79 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=80 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=81 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=82 invoke_us=384 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=83 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=84 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=85 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=86 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=87 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=88 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=89 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=90 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=91 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=92 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=93 invoke_us=375 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=94 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=95 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=96 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=97 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=98 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=99 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+board=rpi4 model=dscnn_us8k_min_int8 run=100 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+
+# environment:
+#   runtime=ai_edge_litert@2.3.0
+#   num_threads=4 xnnpack=off
+#   python=3.13.5 machine=aarch64 kernel=6.18.50+rpt-rpi-v8
+#   cpu_governor=performance cpu_cur_khz=1800000 cpu_max_khz=1800000
+#   temp_before_c=48.7 temp_after_c=49.7 throttled_before=0x0 throttled=0x0
+#   rss_before_load_bytes=35872768 peak_rss_bytes=45969408 peak_rss_delta_bytes=10096640 peak_window=vmhwm model_file_bytes=5392
+
+# full remote output:
+#   board=rpi4 model=dscnn_us8k_min_int8 run=1 invoke_us=372 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=2 invoke_us=368 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=3 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=4 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=5 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=6 invoke_us=382 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=7 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=8 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=9 invoke_us=371 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=10 invoke_us=368 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=11 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=12 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=13 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=14 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=15 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=16 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=17 invoke_us=386 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=18 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=19 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=20 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=21 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=22 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=23 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=24 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=25 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=26 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=27 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=28 invoke_us=401 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=29 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=30 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=31 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=32 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=33 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=34 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=35 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=36 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=37 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=38 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=39 invoke_us=378 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=40 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=41 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=42 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=43 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=44 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=45 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=46 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=47 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=48 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=49 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=50 invoke_us=383 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=51 invoke_us=368 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=52 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=53 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=54 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=55 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=56 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=57 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=58 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=59 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=60 invoke_us=380 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=61 invoke_us=369 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=62 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=63 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=64 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=65 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=66 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=67 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=68 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=69 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=70 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=71 invoke_us=376 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=72 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=73 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=74 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=75 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=76 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=77 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=78 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=79 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=80 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=81 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=82 invoke_us=384 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=83 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=84 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=85 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=86 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=87 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=88 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=89 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=90 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=91 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=92 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=93 invoke_us=375 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=94 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=95 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=96 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=97 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=98 invoke_us=366 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=99 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   board=rpi4 model=dscnn_us8k_min_int8 run=100 invoke_us=367 preprocess_us=-1 arena_used_bytes=-1 status=ok
+#   runtime=ai_edge_litert@2.3.0
+#   num_threads=4 xnnpack=off
+#   python=3.13.5 machine=aarch64 kernel=6.18.50+rpt-rpi-v8
+#   cpu_governor=performance cpu_cur_khz=1800000 cpu_max_khz=1800000
+#   temp_before_c=48.7 temp_after_c=49.7 throttled_before=0x0 throttled=0x0
+#   rss_before_load_bytes=35872768 peak_rss_bytes=45969408 peak_rss_delta_bytes=10096640 peak_window=vmhwm model_file_bytes=5392
+#   runs: 100
+#   timer output: 0.000368794
