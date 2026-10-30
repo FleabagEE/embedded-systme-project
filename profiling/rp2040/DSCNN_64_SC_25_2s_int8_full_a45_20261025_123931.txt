@@ -1,0 +1,227 @@
+# CREST Nano RP2040 Connect latency/memory result
+# generated_utc: 2026-10-25T19:39:31+00:00
+# board: nano_rp2040_connect  model: DSCNN_64_SC_25_2s_int8  port: /dev/ttyACM0
+# timed_runs: 100  warmup_runs: 5  preprocess_on_device: no (preprocess_us=-1)
+#
+# arena sweep:
+#   arena_kb=45 status=ok reason=None flash_bytes=376354 ram_bytes=96592 upload_s=18.6
+#
+# summary:
+#   status=ok arena_kb=45 arena_used_bytes=40436
+#   flash_bytes=376354 ram_bytes=96592 (arena included in ram_bytes)
+#   n=100 median_invoke_us=348685.5 p95_invoke_us=348728 min_invoke_us=348623 max_invoke_us=348763 mean_invoke_us=348684.1
+#   crest_timer_output_s=0.348684
+#   p95 uses the nearest-rank method.
+#
+# raw per-run lines:
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=1 invoke_us=348700 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=2 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=3 invoke_us=348710 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=4 invoke_us=348718 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=5 invoke_us=348698 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=6 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=7 invoke_us=348715 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=8 invoke_us=348673 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=9 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=10 invoke_us=348676 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=11 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=12 invoke_us=348705 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=13 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=14 invoke_us=348657 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=15 invoke_us=348675 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=16 invoke_us=348711 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=17 invoke_us=348712 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=18 invoke_us=348677 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=19 invoke_us=348708 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=20 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=21 invoke_us=348648 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=22 invoke_us=348763 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=23 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=24 invoke_us=348660 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=25 invoke_us=348675 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=26 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=27 invoke_us=348718 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=28 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=29 invoke_us=348718 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=30 invoke_us=348682 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=31 invoke_us=348639 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=32 invoke_us=348685 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=33 invoke_us=348751 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=34 invoke_us=348684 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=35 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=36 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=37 invoke_us=348708 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=38 invoke_us=348688 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=39 invoke_us=348690 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=40 invoke_us=348703 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=41 invoke_us=348663 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=42 invoke_us=348682 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=43 invoke_us=348664 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=44 invoke_us=348698 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=45 invoke_us=348728 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=46 invoke_us=348691 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=47 invoke_us=348732 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=48 invoke_us=348623 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=49 invoke_us=348665 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=50 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=51 invoke_us=348645 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=52 invoke_us=348650 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=53 invoke_us=348684 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=54 invoke_us=348684 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=55 invoke_us=348704 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=56 invoke_us=348697 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=57 invoke_us=348696 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=58 invoke_us=348706 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=59 invoke_us=348685 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=60 invoke_us=348690 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=61 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=62 invoke_us=348650 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=63 invoke_us=348678 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=64 invoke_us=348694 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=65 invoke_us=348661 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=66 invoke_us=348646 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=67 invoke_us=348702 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=68 invoke_us=348700 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=69 invoke_us=348679 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=70 invoke_us=348648 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=71 invoke_us=348699 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=72 invoke_us=348645 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=73 invoke_us=348659 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=74 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=75 invoke_us=348698 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=76 invoke_us=348658 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=77 invoke_us=348708 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=78 invoke_us=348674 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=79 invoke_us=348691 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=80 invoke_us=348704 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=81 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=82 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=83 invoke_us=348675 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=84 invoke_us=348736 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=85 invoke_us=348629 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=86 invoke_us=348705 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=87 invoke_us=348685 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=88 invoke_us=348677 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=89 invoke_us=348700 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=90 invoke_us=348691 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=91 invoke_us=348641 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=92 invoke_us=348662 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=93 invoke_us=348638 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=94 invoke_us=348688 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=95 invoke_us=348646 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=96 invoke_us=348658 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=97 invoke_us=348671 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=98 invoke_us=348755 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=99 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=100 invoke_us=348686 preprocess_us=-1 arena_used_bytes=40436 status=ok
+
+# full serial log of the final attempt:
+#   DUT READY
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=1 invoke_us=348700 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=2 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=3 invoke_us=348710 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=4 invoke_us=348718 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=5 invoke_us=348698 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=6 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=7 invoke_us=348715 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=8 invoke_us=348673 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=9 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=10 invoke_us=348676 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=11 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=12 invoke_us=348705 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=13 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=14 invoke_us=348657 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=15 invoke_us=348675 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=16 invoke_us=348711 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=17 invoke_us=348712 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=18 invoke_us=348677 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=19 invoke_us=348708 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=20 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=21 invoke_us=348648 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=22 invoke_us=348763 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=23 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=24 invoke_us=348660 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=25 invoke_us=348675 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=26 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=27 invoke_us=348718 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=28 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=29 invoke_us=348718 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=30 invoke_us=348682 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=31 invoke_us=348639 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=32 invoke_us=348685 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=33 invoke_us=348751 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=34 invoke_us=348684 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=35 invoke_us=348695 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=36 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=37 invoke_us=348708 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=38 invoke_us=348688 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=39 invoke_us=348690 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=40 invoke_us=348703 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=41 invoke_us=348663 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=42 invoke_us=348682 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=43 invoke_us=348664 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=44 invoke_us=348698 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=45 invoke_us=348728 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=46 invoke_us=348691 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=47 invoke_us=348732 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=48 invoke_us=348623 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=49 invoke_us=348665 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=50 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=51 invoke_us=348645 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=52 invoke_us=348650 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=53 invoke_us=348684 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=54 invoke_us=348684 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=55 invoke_us=348704 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=56 invoke_us=348697 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=57 invoke_us=348696 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=58 invoke_us=348706 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=59 invoke_us=348685 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=60 invoke_us=348690 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=61 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=62 invoke_us=348650 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=63 invoke_us=348678 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=64 invoke_us=348694 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=65 invoke_us=348661 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=66 invoke_us=348646 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=67 invoke_us=348702 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=68 invoke_us=348700 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=69 invoke_us=348679 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=70 invoke_us=348648 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=71 invoke_us=348699 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=72 invoke_us=348645 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=73 invoke_us=348659 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=74 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=75 invoke_us=348698 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=76 invoke_us=348658 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=77 invoke_us=348708 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=78 invoke_us=348674 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=79 invoke_us=348691 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=80 invoke_us=348704 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=81 invoke_us=348670 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=82 invoke_us=348693 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=83 invoke_us=348675 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=84 invoke_us=348736 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=85 invoke_us=348629 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=86 invoke_us=348705 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=87 invoke_us=348685 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=88 invoke_us=348677 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=89 invoke_us=348700 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=90 invoke_us=348691 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=91 invoke_us=348641 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=92 invoke_us=348662 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=93 invoke_us=348638 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=94 invoke_us=348688 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=95 invoke_us=348646 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=96 invoke_us=348658 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=97 invoke_us=348671 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=98 invoke_us=348755 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=99 invoke_us=348654 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   board=nano_rp2040_connect model=DSCNN_64_SC_25_2s_int8 run=100 invoke_us=348686 preprocess_us=-1 arena_used_bytes=40436 status=ok
+#   runs: 100
+#   inference seq: 1
+#   energy output (mJ): -1.000000
+#   avg power output (mW): -1.000
+#   avg current output (mA): -1.000
+#   bus voltage output (V): -1.000
+#   idle power baseline (mW): -1.000
+#   timer output: 0.348684

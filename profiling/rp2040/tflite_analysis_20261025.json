@@ -1,0 +1,878 @@
+{
+ "baseline": {
+  "path": "FleabagEE/crest:models/rp2040_bench/dscnn_us8k_min_int8/g_model.tflite",
+  "input": [
+   1,
+   201,
+   64
+  ],
+  "total_macs": 68190,
+  "peak_activation_bytes": 25744,
+  "peak_at_op": 3,
+  "num_tensors": 26,
+  "num_ops": 10,
+  "layers": [
+   {
+    "op": "SHAPE",
+    "in": [
+     1,
+     201,
+     64
+    ],
+    "out": [
+     3
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 12876
+   },
+   {
+    "op": "STRIDED_SLICE",
+    "in": [
+     3
+    ],
+    "out": [],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 12880
+   },
+   {
+    "op": "PACK",
+    "in": [],
+    "out": [
+     4
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 12884
+   },
+   {
+    "op": "RESHAPE",
+    "in": [
+     1,
+     201,
+     64
+    ],
+    "out": [
+     1,
+     201,
+     64,
+     1
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 25744
+   },
+   {
+    "op": "DEPTHWISE_CONV_2D",
+    "in": [
+     1,
+     201,
+     64,
+     1
+    ],
+    "out": [
+     1,
+     101,
+     32,
+     1
+    ],
+    "detail": "k=3x3",
+    "macs": 29088,
+    "live_bytes": 16096
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     101,
+     32,
+     1
+    ],
+    "out": [
+     1,
+     101,
+     32,
+     3
+    ],
+    "detail": "k=1x1",
+    "macs": 9696,
+    "live_bytes": 12928
+   },
+   {
+    "op": "DEPTHWISE_CONV_2D",
+    "in": [
+     1,
+     101,
+     32,
+     3
+    ],
+    "out": [
+     1,
+     51,
+     16,
+     3
+    ],
+    "detail": "k=3x3",
+    "macs": 22032,
+    "live_bytes": 12144
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     51,
+     16,
+     3
+    ],
+    "out": [
+     1,
+     51,
+     16,
+     3
+    ],
+    "detail": "k=1x1",
+    "macs": 7344,
+    "live_bytes": 4896
+   },
+   {
+    "op": "MEAN",
+    "in": [
+     1,
+     51,
+     16,
+     3
+    ],
+    "out": [
+     1,
+     3
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 2451
+   },
+   {
+    "op": "FULLY_CONNECTED",
+    "in": [
+     1,
+     3
+    ],
+    "out": [
+     1,
+     10
+    ],
+    "detail": "3->10",
+    "macs": 30,
+    "live_bytes": 13
+   }
+  ]
+ },
+ "SC1_1s": {
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_1/exports/1s/int8.tflite",
+  "input": [
+   1,
+   98,
+   64,
+   1
+  ],
+  "total_macs": 19622144,
+  "peak_activation_bytes": 75776,
+  "peak_at_op": 1,
+  "num_tensors": 18,
+  "num_ops": 6,
+  "layers": [
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     98,
+     64,
+     1
+    ],
+    "out": [
+     1,
+     49,
+     32,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 451584,
+    "live_bytes": 56448
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     49,
+     32,
+     32
+    ],
+    "out": [
+     1,
+     25,
+     16,
+     64
+    ],
+    "detail": "k=3x3",
+    "macs": 7372800,
+    "live_bytes": 75776
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     25,
+     16,
+     64
+    ],
+    "out": [
+     1,
+     13,
+     8,
+     128
+    ],
+    "detail": "k=3x3",
+    "macs": 7667712,
+    "live_bytes": 38912
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     13,
+     8,
+     128
+    ],
+    "out": [
+     1,
+     7,
+     4,
+     128
+    ],
+    "detail": "k=3x3",
+    "macs": 4128768,
+    "live_bytes": 16896
+   },
+   {
+    "op": "MEAN",
+    "in": [
+     1,
+     7,
+     4,
+     128
+    ],
+    "out": [
+     1,
+     128
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 3712
+   },
+   {
+    "op": "FULLY_CONNECTED",
+    "in": [
+     1,
+     128
+    ],
+    "out": [
+     1,
+     10
+    ],
+    "detail": "128->10",
+    "macs": 1280,
+    "live_bytes": 138
+   }
+  ]
+ },
+ "SC1_2s": {
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_1/exports/2s/int8.tflite",
+  "input": [
+   1,
+   198,
+   64,
+   1
+  ],
+  "total_macs": 38072576,
+  "peak_activation_bytes": 152576,
+  "peak_at_op": 1,
+  "num_tensors": 18,
+  "num_ops": 6,
+  "layers": [
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     198,
+     64,
+     1
+    ],
+    "out": [
+     1,
+     99,
+     32,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 912384,
+    "live_bytes": 114048
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     99,
+     32,
+     32
+    ],
+    "out": [
+     1,
+     50,
+     16,
+     64
+    ],
+    "detail": "k=3x3",
+    "macs": 14745600,
+    "live_bytes": 152576
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     50,
+     16,
+     64
+    ],
+    "out": [
+     1,
+     25,
+     8,
+     128
+    ],
+    "detail": "k=3x3",
+    "macs": 14745600,
+    "live_bytes": 76800
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     25,
+     8,
+     128
+    ],
+    "out": [
+     1,
+     13,
+     4,
+     128
+    ],
+    "detail": "k=3x3",
+    "macs": 7667712,
+    "live_bytes": 32256
+   },
+   {
+    "op": "MEAN",
+    "in": [
+     1,
+     13,
+     4,
+     128
+    ],
+    "out": [
+     1,
+     128
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 6784
+   },
+   {
+    "op": "FULLY_CONNECTED",
+    "in": [
+     1,
+     128
+    ],
+    "out": [
+     1,
+     10
+    ],
+    "detail": "128->10",
+    "macs": 1280,
+    "live_bytes": 138
+   }
+  ]
+ },
+ "SC5_1s": {
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_5/exports/1s/int8.tflite",
+  "input": [
+   1,
+   98,
+   64,
+   1
+  ],
+  "total_macs": 5018752,
+  "peak_activation_bytes": 37888,
+  "peak_at_op": 1,
+  "num_tensors": 18,
+  "num_ops": 6,
+  "layers": [
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     98,
+     64,
+     1
+    ],
+    "out": [
+     1,
+     49,
+     32,
+     16
+    ],
+    "detail": "k=3x3",
+    "macs": 225792,
+    "live_bytes": 31360
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     49,
+     32,
+     16
+    ],
+    "out": [
+     1,
+     25,
+     16,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 1843200,
+    "live_bytes": 37888
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     25,
+     16,
+     32
+    ],
+    "out": [
+     1,
+     13,
+     8,
+     64
+    ],
+    "detail": "k=3x3",
+    "macs": 1916928,
+    "live_bytes": 19456
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     13,
+     8,
+     64
+    ],
+    "out": [
+     1,
+     7,
+     4,
+     64
+    ],
+    "detail": "k=3x3",
+    "macs": 1032192,
+    "live_bytes": 8448
+   },
+   {
+    "op": "MEAN",
+    "in": [
+     1,
+     7,
+     4,
+     64
+    ],
+    "out": [
+     1,
+     64
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 1856
+   },
+   {
+    "op": "FULLY_CONNECTED",
+    "in": [
+     1,
+     64
+    ],
+    "out": [
+     1,
+     10
+    ],
+    "detail": "64->10",
+    "macs": 640,
+    "live_bytes": 74
+   }
+  ]
+ },
+ "SC5_2s": {
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_5/exports/2s/int8.tflite",
+  "input": [
+   1,
+   198,
+   64,
+   1
+  ],
+  "total_macs": 9746560,
+  "peak_activation_bytes": 76288,
+  "peak_at_op": 1,
+  "num_tensors": 18,
+  "num_ops": 6,
+  "layers": [
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     198,
+     64,
+     1
+    ],
+    "out": [
+     1,
+     99,
+     32,
+     16
+    ],
+    "detail": "k=3x3",
+    "macs": 456192,
+    "live_bytes": 63360
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     99,
+     32,
+     16
+    ],
+    "out": [
+     1,
+     50,
+     16,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 3686400,
+    "live_bytes": 76288
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     50,
+     16,
+     32
+    ],
+    "out": [
+     1,
+     25,
+     8,
+     64
+    ],
+    "detail": "k=3x3",
+    "macs": 3686400,
+    "live_bytes": 38400
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     25,
+     8,
+     64
+    ],
+    "out": [
+     1,
+     13,
+     4,
+     64
+    ],
+    "detail": "k=3x3",
+    "macs": 1916928,
+    "live_bytes": 16128
+   },
+   {
+    "op": "MEAN",
+    "in": [
+     1,
+     13,
+     4,
+     64
+    ],
+    "out": [
+     1,
+     64
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 3392
+   },
+   {
+    "op": "FULLY_CONNECTED",
+    "in": [
+     1,
+     64
+    ],
+    "out": [
+     1,
+     10
+    ],
+    "detail": "64->10",
+    "macs": 640,
+    "live_bytes": 74
+   }
+  ]
+ },
+ "SC25_1s": {
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_25/exports/1s/int8.tflite",
+  "input": [
+   1,
+   98,
+   64,
+   1
+  ],
+  "total_macs": 1311296,
+  "peak_activation_bytes": 18944,
+  "peak_at_op": 1,
+  "num_tensors": 18,
+  "num_ops": 6,
+  "layers": [
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     98,
+     64,
+     1
+    ],
+    "out": [
+     1,
+     49,
+     32,
+     8
+    ],
+    "detail": "k=3x3",
+    "macs": 112896,
+    "live_bytes": 18816
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     49,
+     32,
+     8
+    ],
+    "out": [
+     1,
+     25,
+     16,
+     16
+    ],
+    "detail": "k=3x3",
+    "macs": 460800,
+    "live_bytes": 18944
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     25,
+     16,
+     16
+    ],
+    "out": [
+     1,
+     13,
+     8,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 479232,
+    "live_bytes": 9728
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     13,
+     8,
+     32
+    ],
+    "out": [
+     1,
+     7,
+     4,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 258048,
+    "live_bytes": 4224
+   },
+   {
+    "op": "MEAN",
+    "in": [
+     1,
+     7,
+     4,
+     32
+    ],
+    "out": [
+     1,
+     32
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 928
+   },
+   {
+    "op": "FULLY_CONNECTED",
+    "in": [
+     1,
+     32
+    ],
+    "out": [
+     1,
+     10
+    ],
+    "detail": "32->10",
+    "macs": 320,
+    "live_bytes": 42
+   }
+  ]
+ },
+ "SC25_2s": {
+  "path": "models/1s_2s/DSCNN_64_SC_all/20261023T213435Z_774e54f8_ffb532/subnets/DSCNN_64_SC_25/exports/2s/int8.tflite",
+  "input": [
+   1,
+   198,
+   64,
+   1
+  ],
+  "total_macs": 2550848,
+  "peak_activation_bytes": 38144,
+  "peak_at_op": 1,
+  "num_tensors": 18,
+  "num_ops": 6,
+  "layers": [
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     198,
+     64,
+     1
+    ],
+    "out": [
+     1,
+     99,
+     32,
+     8
+    ],
+    "detail": "k=3x3",
+    "macs": 228096,
+    "live_bytes": 38016
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     99,
+     32,
+     8
+    ],
+    "out": [
+     1,
+     50,
+     16,
+     16
+    ],
+    "detail": "k=3x3",
+    "macs": 921600,
+    "live_bytes": 38144
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     50,
+     16,
+     16
+    ],
+    "out": [
+     1,
+     25,
+     8,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 921600,
+    "live_bytes": 19200
+   },
+   {
+    "op": "CONV_2D",
+    "in": [
+     1,
+     25,
+     8,
+     32
+    ],
+    "out": [
+     1,
+     13,
+     4,
+     32
+    ],
+    "detail": "k=3x3",
+    "macs": 479232,
+    "live_bytes": 8064
+   },
+   {
+    "op": "MEAN",
+    "in": [
+     1,
+     13,
+     4,
+     32
+    ],
+    "out": [
+     1,
+     32
+    ],
+    "detail": "",
+    "macs": 0,
+    "live_bytes": 1696
+   },
+   {
+    "op": "FULLY_CONNECTED",
+    "in": [
+     1,
+     32
+    ],
+    "out": [
+     1,
+     10
+    ],
+    "detail": "32->10",
+    "macs": 320,
+    "live_bytes": 42
+   }
+  ]
+ }
+}
