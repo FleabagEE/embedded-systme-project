@@ -6,7 +6,7 @@ from training.utils import load_config
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', default='configs/baseline.yaml')
+    parser.add_argument('--config', default='config.yaml')
     args = parser.parse_args()
     config = load_config(args.config)
     records, classes = load_metadata(config['dataset']['root'])

@@ -12,21 +12,22 @@ from training.runtime import runtime_info, select_device, verify_training_device
 
 
 class RuntimeSelectionTests(unittest.TestCase):
-    def fake_tf(self, gpus):
+    def fake_tf(self, gpus, cuda=True):
         tf = Mock()
         tf.__version__ = '2.15.1'
         tf.config.list_physical_devices.return_value = gpus
+        tf.test.is_built_with_cuda.return_value = cuda
         return tf
 
     def test_auto_prefers_gpu(self):
         gpu = Mock(name='gpu')
         gpu.name = '/physical_device:GPU:0'
         tf = self.fake_tf([gpu])
-        with patch('training.runtime._selection', {}), patch('training.runtime.platform.system', return_value='Darwin'):
+        with patch('training.runtime._selection', {}):
             self.assertEqual(select_device(tf, {'device': 'auto', 'deterministic': True}), '/GPU:0')
             tf.config.list_physical_devices.assert_called_once_with('GPU')
             tf.config.set_visible_devices.assert_called_once_with([gpu], 'GPU')
-            self.assertEqual(runtime_info()['backend'], 'Metal')
+            self.assertEqual(runtime_info()['backend'], 'CUDA')
             # Detection is deliberately not claimed as execution verification.
             self.assertFalse(runtime_info()['gpu_execution_verified'])
 
@@ -37,8 +38,15 @@ class RuntimeSelectionTests(unittest.TestCase):
                 self.assertEqual(select_device(tf, {'device': requested, 'deterministic': True}), '/CPU:0')
                 tf.config.set_visible_devices.assert_called_once_with([], 'GPU')
 
+    def test_non_cuda_build_never_selects_a_plugin_gpu(self):
+        tf = self.fake_tf([Mock(name='other_gpu')], cuda=False)
+        with patch('training.runtime._selection', {}):
+            self.assertEqual(select_device(tf, {'device': 'auto', 'deterministic': True}), '/CPU:0')
+            with self.assertRaisesRegex(RuntimeError, 'CUDA requested'):
+                select_device(tf, {'device': 'cuda', 'deterministic': True})
+
     def test_explicit_gpu_missing_and_late_visibility_change_fail(self):
-        with self.assertRaisesRegex(RuntimeError, 'GPU requested'):
+        with self.assertRaisesRegex(RuntimeError, 'CUDA requested'):
             select_device(self.fake_tf([]), {'device': 'gpu', 'deterministic': True})
         tf = self.fake_tf([])
         tf.config.set_visible_devices.side_effect = RuntimeError('initialized')

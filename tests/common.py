@@ -2,7 +2,7 @@ from training.utils import load_config, configure_runtime
 
 
 def config():
-    c = load_config('configs/baseline.yaml')
+    c = load_config('config.yaml')
     c['model'].update(conv_type='DW', width='5', num_blocks=2, base_channels=[8, 12])
     c['audio'].update(n_mels=40, duration_sec=1)
     c['augmentation']['enabled'] = False

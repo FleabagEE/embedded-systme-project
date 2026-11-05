@@ -1,0 +1,9 @@
+# Portable training dependencies; preserve the existing TF/Keras/NumPy frontend.
+# Use Python 3.11. Colab creates a separate 3.11 interpreter.
+tensorflow==2.15.1
+keras==2.15.0
+numpy==1.26.4
+librosa==0.11.0
+soundfile==0.14.0
+PyYAML==6.0.3
+scikit-learn==1.9.1

@@ -23,7 +23,7 @@ class ShapeTests(unittest.TestCase):
                 for width in ('1', '5', '25'):
                     model = build_model(c, width)
                     before = model.get_weights()
-                    for frames in (98, 198):
+                    for frames in (98, 148, 198):
                         out = model(np.ones((2, frames, mels, 1), np.float32))
                         self.assertEqual(tuple(out.shape), (2, 10))
                     for a, b in zip(before, model.get_weights()):

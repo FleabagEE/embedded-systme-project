@@ -35,3 +35,19 @@ def log_mel(waveform, audio):
         spectrum = spectrum ** 2
     mel = spectrum @ mel_filter(audio['sample_rate'], audio['fft_length'], audio['n_mels'])
     return np.log(np.maximum(mel, audio['log_offset'])).astype(np.float32)[..., None]
+
+
+def normalize_features(features, audio):
+    if audio.get('normalization', 'none') == 'fixed':
+        features = (features - audio.get('normalization_mean', 0.)) / audio.get('normalization_std', 1.)
+    return np.asarray(features, np.float32)
+
+
+def extract_features(waveform, config, *, training=False, rng=None):
+    """Log-Mel -> training-only masks -> fixed/identity normalization for every split."""
+    features = log_mel(waveform, config['audio'])
+    if training:
+        from training.augment import Compose, transform_config
+        aug = transform_config(config['augmentation'])
+        features = Compose(aug.get('spectrogram', {}), aug['enabled'])(features, rng)
+    return normalize_features(features, config['audio'])

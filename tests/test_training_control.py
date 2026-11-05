@@ -8,6 +8,23 @@ from tests.common import config
 
 
 class TrainingControlTests(unittest.TestCase):
+    def test_mixed_accuracy_is_equal_duration_mean_not_pooled(self):
+        from training.train import validate_epoch
+        c = config()
+        c['training']['duration_secs'] = [1, 1.5, 2]
+        class Dataset:
+            def batches(self, **kwargs):
+                duration = kwargs['duration']
+                count = {1: 2, 1.5: 1, 2: 7}[duration]
+                yield np.zeros((count, 2, 2, 1), np.float32), np.full(count, int(duration == 1.5), np.int32), [str(i) for i in range(count)]
+        class Model:
+            def __call__(self, x, **kwargs):
+                return tf.constant([[2., 0.]] * len(x))
+        row = validate_epoch(Model(), Dataset(), c, ['5'], {0:'a',1:'b'}, True)
+        self.assertAlmostEqual(row['val_accuracy'], 2/3)
+        self.assertNotAlmostEqual(row['val_accuracy'], 9/10)
+        self.assertEqual([row[f'val_accuracy_{d}s'] for d in ('1','1.5','2')], [1.,0.,1.])
+
     def test_accuracy_checkpoint_patience_and_lr_reduction(self):
         c = config()
         settings = {**c['training'], 'monitor': 'val_accuracy', 'early_stopping_patience': 2, 'lr_patience': 1}

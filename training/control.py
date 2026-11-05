@@ -3,8 +3,7 @@ import tensorflow as tf
 
 
 def training_callbacks(model, optimizer, settings, checkpoint):
-    monitor = settings.get('monitor', 'val_loss')
-    mode = 'min' if monitor == 'val_loss' else 'max'
+    monitor, mode = 'val_accuracy', 'max'
     model.optimizer = optimizer
     model.stop_training = False
     early = tf.keras.callbacks.EarlyStopping(monitor=monitor, mode=mode,

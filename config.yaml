@@ -6,8 +6,8 @@ dataset:
   cache_dir: features/waveforms
 audio:
   sample_rate: 16000
-  duration_sec: 1.0 #
-  n_mels: 64 #
+  duration_sec: 1.0
+  n_mels: 64
   frame_length_ms: 25
   hop_length_ms: 10
   fft_length: 512
@@ -15,20 +15,26 @@ audio:
   spectrum: power
   mono: mean
   normalization: none
+  normalization_mean: 0.0
+  normalization_std: 1.0
   padding: center
   center: false
 augmentation:
   enabled: true
-  speed_probability: 0.50
-  speed_min: 0.9
-  speed_max: 1.1
-  gain_probability: 0.80
-  gain_db_min: -6.0
-  gain_db_max: 6.0
+  waveform:
+    RandomTimeShift: {enabled: true, probability: 0.5, max_seconds: 0.2}
+    RandomGain: {enabled: true, probability: 0.5, min_db: -6.0, max_db: 6.0}
+    AddBackgroundNoise: {enabled: true, probability: 0.4, min_snr_db: 15.0, max_snr_db: 30.0, source: gaussian}
+    PitchShift: {enabled: true, probability: 0.2, min_semitones: -1.0, max_semitones: 1.0}
+    TimeStretch: {enabled: true, probability: 0.2, min_rate: 0.9, max_rate: 1.1}
+  spectrogram:
+    FrequencyMask: {enabled: true, probability: 0.5, max_bins: 4}
+    TimeMask: {enabled: true, probability: 0.5, max_frames: 10, reference_frames: 100}
 model:
-  conv_type: SC #
+  architecture: dscnn
+  conv_type: SC
   standard_stem: true
-  width: 'all' #
+  width: 'all'
   num_blocks: 4
   base_channels: [32, 64, 128, 128]
   kernel_size: 3
@@ -48,6 +54,7 @@ training:
   min_learning_rate: 0.00001
 evaluation:
   num_crops: 3
+  include_confusion_matrix: false
 all_width_training:
   loss_weights: [1.0, 1.0, 1.0]
   shared_weights: true
@@ -55,8 +62,10 @@ all_width_training:
 quantization:
   representative_samples: 128
   int8_in_and_out: true
-  output_duration_secs: [1, 2]
+  output_duration_secs: [] # Follow training.duration_secs; explicitly list durations to override.
+  formats: [fp32, int8]
 runtime:
-  device: cpu
+  device: auto
   deterministic: true
   output_dir: models
+  work_dir: null

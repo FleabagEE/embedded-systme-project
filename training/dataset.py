@@ -10,7 +10,7 @@ import numpy as np
 import soundfile as sf
 
 from training.augment import prepare_waveform, evaluation_crops
-from training.features import log_mel
+from training.features import extract_features
 from training.utils import atomic_write, digest, training_durations
 
 
@@ -76,7 +76,7 @@ def cached_waveform(record, config):
         return read_waveform(record.path, config['audio']['sample_rate'])
     stat = record.path.stat()
     key = digest({'path': str(record.path.resolve()), 'size': stat.st_size, 'mtime_ns': stat.st_mtime_ns,
-                  'audio': config['audio'], 'frontend_version': 1, 'resampler': 'soxr_hq',
+                  'sample_rate': config['audio']['sample_rate'], 'mono': 'mean', 'frontend_version': 2, 'resampler': 'soxr_hq',
                   'stage': 'normalized-mono-resampled-waveform'})
     path = Path(cache) / f'{key}.npy'
     if path.exists():
@@ -93,40 +93,39 @@ def cached_waveform(record, config):
     return y
 
 
-class AudioDataset:
-    def __init__(self, records, config, split, *, limit=None):
-        self.config, self.split = config, split
-        self.records = partition(records, config, split)
-        # Seeded shuffle avoids CSV-order bias; it does not balance class counts.
-        self.records = [self.records[i] for i in np.random.default_rng(config['training']['seed']).permutation(len(self.records))]
-        if limit is not None:
-            if limit < 1:
-                raise ValueError('Dataset limit must be positive')
-            self.records = self.records[:limit]
-        if not self.records:
-            raise ValueError(f'No examples in split {split}')
+class BatchDataset:
+    """Sequential loader; RNG streams are keyed by seed, epoch, retrieval and worker ID."""
+    def _setup(self, config, split, worker_id=0):
+        self.config, self.split, self.worker_id = config, split, worker_id
+        self._retrievals = {}
 
     def batches(self, epoch=0, batch_size=None, training=None, duration=None):
-        rng = np.random.default_rng(np.random.SeedSequence([self.config['training']['seed'], epoch]))
         training = self.split == 'train' if training is None else training
-        order = rng.permutation(len(self.records)) if training else np.arange(len(self.records))
+        if training and self.split != 'train':
+            raise ValueError('Augmentation is only allowed for the training split')
+        visit = self._retrievals.get(epoch, 0) if training else 0
+        if training:
+            self._retrievals[epoch] = visit + 1
+        rng = np.random.default_rng(np.random.SeedSequence([
+            self.config['training']['seed'], epoch, visit, self.worker_id]))
+        order = rng.permutation(self.count) if training else np.arange(self.count)
         size = batch_size or self.config['training']['batch_size']
-        x, y, ids = [], [], []
-        batch_index = 0
         durations = training_durations(self.config)
+        x, y, ids, batch_index = [], [], [], 0
         for index in order:
-            r = self.records[index]
-            wave = cached_waveform(r, self.config)
-            seconds = (durations[(epoch + batch_index) % len(durations)]
-                       if training and duration is None else self.config['audio']['duration_sec'] if duration is None else duration)
+            wave, label, file_id = self.example(int(index))
+            seconds = (durations[(epoch + batch_index) % len(durations)] if training and duration is None
+                       else self.config['audio']['duration_sec'] if duration is None else duration)
             if training:
-                crops = [prepare_waveform(wave, self.config, True, rng, duration=seconds)]
+                crops = [prepare_waveform(wave, self.config, True, rng, duration=seconds,
+                         noise_provider=lambda r, n: self.noise(r, n, int(index)))]
             else:
-                crops = evaluation_crops(wave, round(self.config['audio']['sample_rate'] * seconds), self.config.get('evaluation', {}).get('num_crops', 1))
+                crops = evaluation_crops(wave, round(self.config['audio']['sample_rate'] * seconds),
+                                         self.config.get('evaluation', {}).get('num_crops', 1))
             for crop in crops:
-                x.append(log_mel(crop, self.config['audio']))
-                y.append(r.label)
-                ids.append(r.file_id)
+                x.append(extract_features(crop, self.config, training=training, rng=rng))
+                y.append(label)
+                ids.append(file_id)
                 if len(x) == size:
                     yield np.stack(x), np.asarray(y, np.int32), ids
                     x, y, ids = [], [], []
@@ -134,50 +133,65 @@ class AudioDataset:
         if x:
             yield np.stack(x), np.asarray(y, np.int32), ids
 
+    def noise(self, rng, samples, exclude):
+        return rng.standard_normal(samples).astype(np.float32)
+
     def representative(self, count):
         if self.split != 'train':
             raise ValueError('Calibration must use training folds only')
-        # Training fold membership with deterministic inference preprocessing, no augmentation.
-        for r in self.records[:count]:
-            if r.fold in (9, 10) or r.fold not in self.config['dataset']['train_folds']:
-                raise ValueError('Held-out fold in calibration')
-            wave = prepare_waveform(cached_waveform(r, self.config), self.config, training=False)
-            yield log_mel(wave, self.config['audio'])[None]
+        for index in range(min(count, self.count)):
+            wave, _, _ = self.example(index)
+            wave = prepare_waveform(wave, self.config, training=False)
+            yield extract_features(wave, self.config, training=False)[None]
 
 
-class SyntheticDataset:
-    """Waveform-based smoke data; its metrics are always marked synthetic."""
-    def __init__(self, config, split, count=12):
-        self.config, self.split, self.count = config, split, count
-        self.records = []
+class AudioDataset(BatchDataset):
+    def __init__(self, records, config, split, *, limit=None, worker_id=0):
+        self._setup(config, split, worker_id)
+        selected = partition(records, config, split)
+        self.records = [selected[i] for i in np.random.default_rng(config['training']['seed']).permutation(len(selected))]
+        if limit is not None:
+            if limit < 1:
+                raise ValueError('Dataset limit must be positive')
+            self.records = self.records[:limit]
+        self.count = len(self.records)
+        if not self.count:
+            raise ValueError(f'No examples in split {split}')
 
-    def batches(self, epoch=0, batch_size=None, training=None, duration=None):
-        training = self.split == 'train' if training is None else training
-        rng = np.random.default_rng(self.config['training']['seed'] + {'train': 0, 'val': 10000, 'test': 20000}[self.split])
-        augmentation_rng = np.random.default_rng(self.config['training']['seed'] + epoch)
-        size = batch_size or self.config['training']['batch_size']
-        x, y, ids = [], [], []
-        durations = training_durations(self.config)
-        for i in range(self.count):
-            label = i % self.config['model']['num_classes']
-            t = np.arange(round(self.config['audio']['sample_rate'] * 2.2), dtype=np.float32) / self.config['audio']['sample_rate']
-            wave = (0.2 * np.sin(2 * np.pi * (150 + label * 150) * t) + rng.normal(0, 0.02, len(t))).astype(np.float32)
-            seconds = (durations[(epoch + i // size) % len(durations)]
-                       if training and duration is None else self.config['audio']['duration_sec'] if duration is None else duration)
-            wave = prepare_waveform(wave, self.config, training, augmentation_rng, duration=seconds)
-            x.append(log_mel(wave, self.config['audio']))
-            y.append(label)
-            ids.append(f'synthetic/{self.split}/{i}')
-            if len(x) == size or i == self.count - 1:
-                yield np.stack(x), np.asarray(y, np.int32), ids
-                x, y, ids = [], [], []
+    def example(self, index):
+        record = self.records[index]
+        if self.split == 'train' and (record.fold not in self.config['dataset']['train_folds'] or record.fold in (9, 10)):
+            raise ValueError('Held-out fold in training/calibration')
+        return cached_waveform(record, self.config), record.label, record.file_id
 
-    def representative(self, count):
+    def noise(self, rng, samples, exclude):
         if self.split != 'train':
-            raise ValueError('Synthetic calibration still requires split=train')
-        source = SyntheticDataset(self.config, 'train', min(count, self.count))
-        for x, _, _ in source.batches(batch_size=1, training=False):
-            yield x
+            raise ValueError('Background audio must come from training folds only')
+        candidates = [i for i in range(self.count) if i != exclude]
+        if not candidates:
+            return super().noise(rng, samples, exclude)
+        wave, _, _ = self.example(candidates[int(rng.integers(len(candidates)))])
+        if len(wave) == 0:
+            return np.zeros(samples, np.float32)
+        if len(wave) < samples:
+            wave = np.tile(wave, int(np.ceil(samples / len(wave))))
+        start = int(rng.integers(len(wave) - samples + 1))
+        return wave[start:start + samples]
+
+
+class SyntheticDataset(BatchDataset):
+    """Waveform-based smoke data; never label its metrics as empirical dataset accuracy."""
+    def __init__(self, config, split, count=12, worker_id=0):
+        self._setup(config, split, worker_id)
+        self.count, self.records = count, []
+
+    def example(self, index):
+        rng = np.random.default_rng(np.random.SeedSequence([
+            self.config['training']['seed'], {'train': 0, 'val': 10000, 'test': 20000}[self.split], index]))
+        label = index % self.config['model']['num_classes']
+        t = np.arange(round(self.config['audio']['sample_rate'] * 2.2), dtype=np.float32) / self.config['audio']['sample_rate']
+        wave = (0.2 * np.sin(2 * np.pi * (150 + label * 150) * t) + rng.normal(0, 0.02, len(t))).astype(np.float32)
+        return wave, label, f'synthetic/{self.split}/{index}'
 
 
 def make_datasets(config, synthetic=False, limit=None):

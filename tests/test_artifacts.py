@@ -19,7 +19,7 @@ class ArtifactTests(unittest.TestCase):
             self.assertEqual(compact(root), 5)
             self.assertEqual(read_report(root), before)
             self.assertEqual((root / 'best.keras').read_bytes(), b'weights must stay unchanged')
-            self.assertEqual(list(root.rglob('*.json')), [root / 'run.json'])
+            self.assertEqual(list(root.rglob('*.json')), [root / 'report.json'])
             self.assertIn('legacy_metrics_summary', read_report(root))
 
     def test_active_run_not_compacted(self):

@@ -1,175 +1,233 @@
-# UrbanSound8K CNN／DS-CNN
+# Reproducible UrbanSound8K CNN / DS-CNN training
 
-TensorFlow 2.15 的訓練、共享寬度模型、FP32／INT8 TFLite 匯出與原始音檔層級評估。
-目前預設將 **1s／2s 混合訓練同一組權重**，完成後同時匯出兩種固定輸入長度。
+TensorFlow 2.15 / Keras 2.15, standard or depthwise-separable convolution, a standard
+convolution stem, nested shared widths, mixed durations, and verified FP32 / INT8
+TFLite exports. The existing architecture and native UrbanSound8K folds are retained.
 
-## 環境與資料
+## Local setup
 
-所有命令從專案根目錄執行，使用既有環境；不會自動下載資料或安裝套件：
+Use Python 3.11. Existing local environment:
 
 ```sh
 PY=/opt/miniconda3/envs/tinyml-tf/bin/python
-"$PY" -m data.loader
 "$PY" -m unittest discover -s tests -v
+"$PY" -m training.train --config config.yaml
 ```
 
-資料位置由 `dataset.root` 指定，預設 `/Users/colin/sound_datasets/urbansound8k`：
+For a new CPU/Linux environment, install `requirements-training.txt`. CUDA/Linux
+training uses `requirements-colab.txt`, which adds the CUDA libraries for the same
+TensorFlow version. `requirements-lock.txt` retains the historical package versions
+apart from the removed platform-specific GPU dependency; it is not the portable
+Colab installer. No environment changes or dataset downloads occur on import.
+
+`config.yaml` is the single canonical configuration. Change existing keys with
+repeatable `--set key=value` overrides. Runtime `auto` prefers CUDA when TensorFlow
+has a CUDA build and sees a GPU, otherwise CPU; `cpu` explicitly hides GPUs.
+`cuda` requires CUDA (`gpu` remains an alias). Non-CUDA builds run on CPU. Device
+selection happens before initialization; restart Python when changing devices or
+determinism. No alternate GPU backend is used. A tiny throwaway optimizer step
+checks actual output/gradient placement and resets the experiment seed afterwards.
+
+## Data, durations, and checkpoint selection
+
+Dataset root is independent of the output root:
 
 ```text
-metadata/UrbanSound8K.csv
- audio/fold1/*.wav ... audio/fold10/*.wav
+<dataset.root>/metadata/UrbanSound8K.csv
+<dataset.root>/audio/fold1/*.wav ... fold10/*.wav
 ```
 
-原生類別由 CSV 讀取。train folds 1–8（7079 檔）、val fold 9（816 檔）、
-test fold 10（837 檔）互不重疊；訓練與 PTQ calibration 不得使用 folds 9／10。
-訓練不會自動評估 test。
-
-`requirements-lock.txt` 保持原樣。既有 Python 3.11／TensorFlow 2.15.1／Keras 2.15.0
-可直接使用。其他主機須用相容的 Python 3.10／3.11；Linux 若無 Metal wheel，應明確
-建立平台安裝清單，不能默默改原 lock：
+Native class IDs are read from metadata. Default train folds are 1–8, validation is
+fold 9, and fold 10 is held out. Training, augmentation noise sources and PTQ cannot
+use folds 9/10. Crops of an original file always remain in its original fold.
 
 ```sh
-# 僅供另一台 Linux 主機安裝時參考；本次沒有執行安裝。
-awk '!/^tensorflow-metal==/' requirements-lock.txt > /tmp/requirements-linux.txt
-python -m pip install -r /tmp/requirements-linux.txt
+# 1.5 seconds, 40 mel bins, DW, width multiplier 0.5
+"$PY" -m training.train --set 'training.duration_secs=[1.5]' \
+  --set audio.n_mels=40 --set model.conv_type=DW --set model.width=5
+
+# Any subset is supported, including all three durations.
+"$PY" -m training.train --set 'training.duration_secs=[1,1.5,2]' --set runtime.device=auto
+
+# Shared-parameter widths 1.0 / 0.5 / 0.25; same batch, one optimizer update.
+"$PY" -m training.train --set model.width=all
+
+# CPU synthetic smoke, with enough batches to exercise all three durations.
+"$PY" -m training.train --dry-run --limit 6 --set runtime.device=cpu \
+  --set training.batch_size=2 --set 'training.duration_secs=[1,1.5,2]'
 ```
 
-## 訓練與長度
+A batch has one fixed duration. Batches alternate selected durations and update the
+same model; the epoch start rotates and files are shuffled. Each original file is
+retrieved once per epoch, not once per duration. Very small smoke datasets need
+enough batches to visit every selected duration. `history.csv` records these counts.
+Empty `training.duration_secs` falls back to `audio.duration_sec`. Empty
+`quantization.output_duration_secs` follows the training durations; an explicit
+list exports only those requested durations. Formats are configurable as
+`quantization.formats: [fp32, int8]`.
+
+With the retained 400-sample Hann window, 160-sample hop and 512 FFT, input shapes
+excluding batch are `[98,n_mels,1]`, `[148,n_mels,1]`, and `[198,n_mels,1]` for
+1s / 1.5s / 2s. Global average pooling lets the same host weights accept these
+lengths. TFLite exports use separate fixed shapes; accuracy across durations is
+measured separately, not assumed equal.
+
+Every validation epoch evaluates every selected duration. `val_accuracy` is the
+**equal-weight mean of per-duration original-file accuracies**. Shared-width runs
+first average the three widths within each duration, then average durations.
+Counts of crops or batches never weight this checkpoint metric. Per-duration
+accuracy and macro-F1 are recorded. ModelCheckpoint, EarlyStopping and LR plateau
+control monitor only this exact `val_accuracy`, mode `max`. Best weights are
+restored before export, and their precise epoch is reported. Terminal/CSV output
+includes accuracy, duration metrics, used/remaining patience, best epoch and LR.
+
+## Composable online augmentation
+
+The ordered pipeline is: normalized float WAV read → channel mean → soxr HQ
+resampling → valid crop/window → waveform Compose → Log-Mel → spectrogram Compose
+→ feature normalization → model. PCM scaling occurs once. Each transform has its
+own enabled flag, probability and parameters in `config.yaml`; decisions are
+independent and parameters are resampled at each training retrieval.
+
+| Transform | Probability | Default parameters |
+| --- | ---: | --- |
+| RandomTimeShift | 0.5 | circular shift up to ±0.2s |
+| RandomGain | 0.5 | −6 to +6 dB, no clipping |
+| AddBackgroundNoise | 0.4 | 15–30 dB SNR |
+| PitchShift | 0.2 | −1 to +1 semitone |
+| TimeStretch | 0.2 | pitch-preserving rate 0.9–1.1 |
+| FrequencyMask | 0.5 | up to 4 mel bins |
+| TimeMask | 0.5 | up to 10 frames per 100 actual frames |
+
+Noise defaults to Gaussian background noise, requiring no external download.
+`source: training_audio` samples another training-fold waveform only. Circular
+shifts preserve all samples; slowed signals retain their highest-energy window;
+masks replace limited bands with the clip mean and are capped at 20% per axis.
+The strongest band/frame is retained if it falls inside a mask, protecting a
+dominant narrow-band event or brief transient.
+Silence/degenerate inputs remain finite. These safeguards avoid total erasure,
+but energy is not proof of semantic event retention; audit demanding ablations.
+
+Random streams use seed, epoch, retrieval index and worker ID. The loader is
+currently sequential; no unseeded DataLoader workers are started. Rebuilding a
+dataset with the same seed reproduces its sequence; repeated training retrievals
+resample it. Validation/test and calibration bypass both Compose stages entirely.
+Deterministic validation crops are evenly spaced (default 3); probabilities are
+averaged by original file ID before classification. Calibration uses one center
+crop from training folds, including the identical feature-normalization step.
+
+Normalization defaults to `none` (identity), preserving the original frontend.
+`audio.normalization: fixed` applies `(features-mean)/std` **after masks**, using
+`normalization_mean` / `normalization_std` supplied from training data only. No
+statistics are fitted on validation/test. Mel uses Slaney area normalization and
+`ln(max(power,1e-6))`; no per-duration scaling changes. Cache only deterministic
+mono/resampled waveforms, never augmented audio or spectrograms.
 
 ```sh
-# 使用 baseline 當下選定的 SC／DW、width、裝置設定。
-"$PY" -m training.train --config configs/baseline.yaml
-
-# 優先 Apple Metal GPU，無 GPU 則使用 CPU。
-"$PY" -m training.train --set runtime.device=auto
-
-# 明確指定 DS-CNN、共享寬度；其他參數仍讀 YAML。
-"$PY" -m training.train --set model.conv_type=DW --set model.width=all
-
-# 僅用 1s 訓練，仍可匯出同權重的 1s／2s。
-"$PY" -m training.train --set 'training.duration_secs=[1]'
-
-# 僅用 2s 訓練／匯出，64 mel，標準 CNN。
-"$PY" -m training.train --set 'training.duration_secs=[2]' \
-  --set 'quantization.output_duration_secs=[2]' --set audio.n_mels=64 --set model.conv_type=SC
-
-# 一個 synthetic epoch，真正執行訓練與 FP32／INT8 轉換；非資料集準確率。
-"$PY" -m training.train --dry-run --limit 4 --set training.batch_size=2
+# Ablations need no code changes.
+"$PY" -m training.train --set augmentation.enabled=false
+"$PY" -m training.train --set augmentation.waveform.PitchShift.enabled=false
+"$PY" -m training.train --set augmentation.spectrogram.TimeMask.probability=0.2
 ```
 
-`training.duration_secs: [1, 2]` 會依序輪替 1s／2s batch，所有 batch 更新同一個模型；
-每個 batch 內的形狀固定。epoch 起點輪替且音檔重新洗牌，各原始檔每個 epoch 使用一次。
-這不代表每個原始檔在同一 epoch 都同時跑過兩種長度。`history.csv` 記錄各長度的樣本數。
-空清單則沿用 `audio.duration_sec`，相容舊設定。
+## Models and experiment reports
 
-每個 epoch 分別驗證兩種長度，先對原始音檔聚合 crop 機率，再計算 accuracy／macro-F1。
-預設 checkpoint、early stopping 與 learning-rate schedule 都監控 `val_accuracy`：
-對訓練長度等權平均；`width=all` 再對三種寬度等權平均。
-也可選 `training.monitor=val_loss` 或 `val_macro_f1`。
-
-終端機與 CSV 會顯示 train accuracy、val accuracy、各 duration 的 val accuracy、
-已用／總 patience、剩餘 patience、最佳 epoch 與學習率。未改善時累計 patience；
-預設連續 8 次未改善停止，恢復最佳權重。連續 3 次未改善則將學習率乘 0.5，最低 1e-5。
-train accuracy 含隨機增強，與固定裁切的 validation accuracy 不是完全相同的評估條件。
-
-`--limit` 是診斷子集，結果會標記；`--dry-run` 的數值明確標記 synthetic。
-`--skip-int8` 可明確只做 FP32。最佳權重 checkpoint 不保存 optimizer 狀態，
-目前不支援接續訓練；新實驗須使用新 run。
-
-## 前處理、增強與模型
-
-訓練順序：soundfile 正規化浮點讀取 → 多聲道平均 → soxr HQ 重採樣 16 kHz →
-50% 機率 librosa 保留音高變速（0.9–1.1）→ 隨機裁切／置中補零 →
-80% 機率隨機增益（−6～+6 dB，不 clipping）→ Log-Mel。
-變速倍率大於 1 會縮短波形。增益為 `10 ** (dB / 20)`。
-增強在每次取樣即時計算，seed 與 epoch 決定隨機序列；不預存增強副本。
-關閉 augmentation 仍保留訓練隨機裁切。
-
-`features/waveforms` 只快取單聲道／重採樣波形，以來源路徑、size／mtime、前處理設定
-與版本雜湊命名並原子寫入；不快取隨機增強。`dataset.cache_dir=null` 可關閉。
-
-Log-Mel：400-sample periodic Hann、160-sample hop、512 FFT、無 centering，
-power spectrum、Slaney mel／area normalization、`ln(max(mel, 1e-6))`，無逐檔正規化。
-1s／2s 的輸入分別是 `[98,n_mels,1]`／`[198,n_mels,1]`；TFLite 接受這個特徵張量，非 WAV。
-
-驗證／測試預設 `evaluation.num_crops: 3`，使用均勻分布的固定裁切，按原始音檔
-平均 softmax 機率；短音檔只補零一次。設為 1 即中央裁切。這些樣本沒有速度／增益增強。
-Calibration 永遠只用 training folds 的單一中央裁切，不增強。
-
-名稱維持 `DSCNN_{40|64}_{SC|DW}_{1|5|25|all}`。`5` 表示 0.5 倍，`25` 表示 0.25 倍，
-通道數 `max(1,floor(base*width))`；`5.0` 不是合法 token。
-新設定 `model.standard_stem=true` 讓第一層使用 Conv2D，其餘 SC 為標準卷積，
-DW 為 depthwise＋pointwise；每個 block stride 2、bias／ReLU、無 BatchNorm，
-最後 Global Average Pooling＋Dense logits。舊設定未包含此旗標時保留原始 stem。
-
-`all` 的 SC／DW kernel 與 classifier 都以同一組 Variable 的 channel prefix 切片。
-同一 minibatch 在單一 GradientTape 內跑三個寬度，再用加權 loss 做一次更新。
-不使用三個獨立模型，也不使用混合寬度的共用 BatchNorm。
-靜態 subnet 匯出時會檢查與 supernet 的數值一致性。
-
-## 精簡後的輸出
+Canonical model identity remains `DSCNN_{40|64}_{SC|DW}_{1|5|25|all}`. Width tokens
+1/5/25 mean multipliers 1.0/0.5/0.25. Channels use `max(1,floor(base*multiplier))`.
+The standard Conv2D stem, stride-2 blocks, bias/ReLU, BN-free policy, GAP and dense
+classifier are retained. Shared models slice the same convolution/classifier
+Variables and export ordinary static subnets; outputs are checked against the
+supernet at every trained duration. Old configurations without the stem flag keep
+their original architecture when loading historical artifacts.
 
 ```text
-models/1s_2s/DSCNN_40_DW_5/<run_id>/
-  config.yaml         # 唯一設定快照
-  history.csv         # 每個 epoch 的指標與 patience
-  run.json            # 集中紀錄，取代原本十多個 JSON
-  best.weights.h5     # 最佳 checkpoint 權重
-  best.keras          # 架構＋最佳權重
-  exports/1s/fp32.tflite, int8.tflite
-  exports/2s/fp32.tflite, int8.tflite
+models/
+  .allocations/                 # durable sequence reservations; do not delete
+  dscnn_001/
+    report.json                 # primary record, including resolved config
+    history.csv                 # the only full history
+    best.weights.h5             # finalized best checkpoint
+    best.keras                  # existing standalone inference model
+    exports/1s/{fp32,int8}.tflite
+    exports/1.5s/{fp32,int8}.tflite
+    exports/2s/{fp32,int8}.tflite
+  summary.csv                   # one row per experiment, rebuilt from reports
 ```
 
-單一長度仍放在 `models/1s/` 或 `models/2s/`。run ID 由 UTC 時間、設定雜湊與隨機碼組成，
-可用 `--run-id` 自訂；碰撞會拒絕覆寫。`all` 在根目錄保存共同紀錄／shared checkpoint，
-三個 subnet 各自保存 `run.json`／`best.keras`／兩種長度的 TFLite，設定讀取共同根目錄。
+Only requested durations/formats are exported. Shared runs keep the parent
+checkpoint and static models under `subnets/DSCNN_.../`, each with a compact
+report and exports; child configs are inherited from the parent report. No new
+YAML snapshots, per-format JSON files or Markdown reports are generated.
+`--run-id` is an optional human label, not a directory override.
 
-`run.json` 分成 `state`、`software_versions`、`dataset_manifest`、`first_training_batch`、
-`checkpoint`、`metadata`、`architecture`、`exports`、`evaluation`、`artifacts` 區塊。
-匯出資訊含 IO dtype／shape／scale／zero-point、operators、bytes、CPU invoke 結果、
-校正檔案清單與 frozen-weight SHA-256；兩種長度相同 hash 表示同一組訓練權重。
-評估資訊依 duration／split 保存，包含 confusion matrix、accuracy、macro-F1 與類別對照。
-另做不同 crop policy 或子集評估時使用不同 key，保留原結果。
+Sequence reservations use atomic directory creation, survive failed/deleted runs,
+and prevent concurrent processes from overwriting/reusing allocated IDs.
+Checkpoints and temporary Keras files live in `runtime.work_dir` or the system
+temporary directory. Final models are published only after validation. JSON and
+export writes use atomic replacement. As with any FUSE/network filesystem, this
+requires the filesystem to honor atomic mkdir/rename; reservations must be kept.
+
+Reports include execution timestamps/status, config/seed/Git/source version,
+dependency/device information, folds, exact best epoch, per-duration metrics,
+parameter/MAC methodology, export paths/sizes/hashes, calibration settings,
+FP32-vs-INT8 accuracy differences, failure details, and unmeasured values as null.
+MACs analytically count the existing conv/depthwise/dense operations for each
+input shape; they exclude bias/ReLU/GAP/frontend and are not SRAM/latency measures.
+Device/arena measurements remain null. Existing CREST identity fields
+`run_id`, `effective_width`, `duration_sec` and `profiling/schema.json` are retained.
+Confusion matrices are optional (`evaluation.include_confusion_matrix=true`);
+the default report stores the required accuracy/F1 metrics without large matrices.
+
+Legacy split JSON/run.json reports and existing TFLite paths remain readable.
+Existing `model_registry.csv` files continue to be updated; fresh experiments use
+only summary.csv unless the legacy registry is explicitly requested:
 
 ```sh
-RUN=models/1s_2s/DSCNN_40_DW_5/實際run_id
-"$PY" -m quantization.convert_int8 --model-dir "$RUN"
-"$PY" -m evaluation.evaluate --model-dir "$RUN" --split val --duration 2
-"$PY" -m evaluation.evaluate --model-dir "$RUN" --split val --num-crops 1
-# 僅在準備使用 held-out 結果時執行：
-"$PY" -m evaluation.evaluate --model-dir "$RUN" --split test
+"$PY" -m training.registry --model-dir models
+"$PY" -m training.registry --model-dir models --legacy
 ```
 
-PTQ 強制 `TFLITE_BUILTINS_INT8` 與 INT8 IO，拒絕 float fallback；檢查 CPU interpreter
-能執行且無 float tensor。錯誤保存在 `run.json` 並 raise。轉換器的 ARITH constant 摘要
-或通用 calibration warning 不等於轉換失敗，以最終 tensors／invocation 驗證為準。
+Legacy-registry mode alone writes `legacy_config.yaml` for consumers
+that read the original CSV `config_path` as YAML; default reports do not need it.
+Completed configurations can be skipped with `--skip-completed`, verifying their
+model hashes. Matching also checks the preprocessing/training source hash and data
+metadata, so changed code is not silently treated as a completed configuration.
+Interrupted/failed configurations allocate a fresh ID on retry and
+preserve their earlier reports. Optimizer-state resume is not implemented; the
+skip/retry behavior is explicit, never an overwrite disguised as resume.
 
-舊版多 JSON 輸出仍可讀取。若要整理既有已完成 run：
+## Export, evaluation and batch runs
 
 ```sh
-"$PY" -m training.artifacts --model-dir models
+"$PY" -m training.sweep --config config.yaml --space configs/search_space.yaml --skip-completed
+"$PY" -m quantization.convert_int8 --model-dir models/dscnn_001 --duration 1.5
+"$PY" -m evaluation.evaluate --model-dir models/dscnn_001 --split val --duration 1.5
+# On another machine, override the dataset location independently:
+"$PY" -m evaluation.evaluate --model-dir models/dscnn_001 --split val \
+  --set dataset.root=/path/to/urbansound8k
+# Explicit final held-out evaluation only, after configuration selection:
+"$PY" -m evaluation.evaluate --model-dir models/dscnn_001 --split test --duration 1.5
 ```
 
-工具先整併、讀回驗證與檢查來源未變動，再刪除明確列出的舊 JSON；不刪除模型權重、
-TFLite、YAML 或 CSV，且拒絕整理仍在訓練中的舊 run。
+Sweeps launch the existing CLI in a new process per configuration, save each
+completed result immediately, skip matching finalized runs when requested, and
+continue after experiment failures. No TensorFlow model/GPU state is retained in
+the controller. FP32 and INT8 use the same deterministic examples, crop positions,
+class IDs and aggregation. PTQ requires training-only representative data,
+`TFLITE_BUILTINS_INT8`, INT8 IO, no float tensors and successful CPU invocation.
+Physical MCU/operator/arena compatibility still needs board-specific validation;
+no firmware, timing/energy or accuracy results are invented.
 
-`models/model_registry.csv` 以 lock＋原子更新記錄各 artifact／duration 的設定、路徑、
-參數、MACs、模型大小及驗證指標；未測量的值留空。參數／MACs／檔案大小不是裝置
-SRAM、Tensor Arena 或延遲。`profiling/schema.json` 保留後續實測欄位；沒有實作韌體、
-能耗／延遲預測與硬體選擇策略。
+## Google Colab
 
-## GPU 與本次分析
-
-`runtime.device` 支援 `auto`／`cpu`／`gpu`；保留目前 YAML 的明確選擇。
-`auto` 偵測 TensorFlow GPU，Apple silicon 使用 Metal，無 GPU 則退回 CPU。
-啟動會用實際模型做 throwaway optimizer update，確認 outputs／gradients／weights 的裝置，
-之後重設 seed。`deterministic=true` 不會被默默關閉；Metal probe 成功不代表跨 OS／driver
-的完整訓練可位元重現。CPU helper ops 仍可使用 CPU，小模型也不保證 GPU 更快。
-更改裝置可見性或 determinism 時請重啟 Python。
-
-```sh
-"$PY" -m training.runtime --set runtime.device=auto --output /tmp/device_verification.json
-```
-
-第一次訓練的 checkpoint 選擇問題、實際診斷與最新測試結果見 `TRAINING_REVIEW.md`。
-`IMPLEMENTATION_REPORT.md`／`GPU_RUNTIME_REPORT.md` 是前版本的歷史驗證記錄。
+Open [`notebooks/colab_training.ipynb`](notebooks/colab_training.ipynb) and run cells
+in order: select GPU runtime → mount Drive/check and clone `colab-training` →
+create the isolated Python 3.11 environment/install pinned dependencies → set
+independent dataset/output paths → edit form controls → train → inspect summary.
+The notebook refuses a missing branch and never falls back to main or embeds
+credentials. It stages data/work/cache under `/content` and saves final artifacts
+to `/content/drive/MyDrive/EmbeddedSystem/models/`. Prior finalized runs survive
+runtime loss. The notebook kernel is not rewritten; training subprocesses use
+the pinned environment and pip-provided CUDA libraries. Live Colab/physical CUDA
+execution must be verified in that runtime; local mocked selection is not a GPU
+benchmark. The optional final-test cell is disabled by default.
