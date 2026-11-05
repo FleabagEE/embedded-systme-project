@@ -71,3 +71,33 @@ class ColabTests(unittest.TestCase):
         self.assertIn('/content/drive/MyDrive/EmbeddedSystem/models',source)
         self.assertNotRegex(source,r'gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|AKIA[A-Z0-9]{16}')
         self.assertFalse(Path('configs/baseline.yaml').exists())
+
+    def test_architecture_pooling_and_shared_options_reach_both_cli_modes(self):
+        from training.utils import load_config
+        sources = self.notebook_sources()
+        controls = next(s for s in sources if s.startswith('#@title Experiment controls'))
+        launch = next(s for s in sources if s.startswith('#@title Train through the repository CLI'))
+        for architecture,token in (('DS-CNN','dscnn'),('MobileNetV2-Tiny','mobilenetv2')):
+            for pooling in ('avg','max','mix'):
+                for mode in ('single','batch'):
+                    with self.subTest(architecture=architecture,pooling=pooling,mode=mode), tempfile.TemporaryDirectory() as tmp:
+                        local_controls = controls.replace("architecture = 'DS-CNN'",f'architecture = {architecture!r}').replace("pooling = 'avg'",f'pooling = {pooling!r}')
+                        run = Mock(return_value=SimpleNamespace(returncode=0))
+                        ns = {'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models'}
+                        exec(local_controls,ns)
+                        ns.update(experiment_mode=mode,augmentation_overrides={'augmentation.enabled':True},
+                                  TRAINING_PYTHON='python',REPO_DIR=tmp,TRAIN_ENV={},subprocess=SimpleNamespace(run=run),
+                                  Path=lambda *_:Path(tmp)/'sweep.json',print=lambda *a:None)
+                        exec(launch,ns)
+                        command = run.call_args.args[0]
+                        overrides = [command[i+1] for i,v in enumerate(command) if v=='--set']
+                        c = load_config('config.yaml',overrides)
+                        self.assertEqual(c['model']['architecture'],token)
+                        self.assertEqual(c['model']['pooling'],pooling)
+                        self.assertEqual(c['model']['expansion_ratio'],3)
+                        self.assertEqual(c['all_width_training']['strategy'],'all')
+                        self.assertEqual(c['quantization']['bn_recalibration_samples'],0)
+                        if mode=='batch':
+                            matrix = json.loads((Path(tmp)/'sweep.json').read_text())['parameters']
+                            self.assertEqual(matrix['model.architecture'],[token])
+                            self.assertEqual(matrix['model.pooling'],[pooling])

@@ -15,6 +15,28 @@ online waveform/spectrogram Compose transforms, accuracy-only checkpoint control
 durable experiment sequence allocation, report-derived summary, subprocess sweeps
 with completed-run skipping, and a lightweight Colab controller.
 
+The architecture extension adds MobileNetV2-Tiny (inverted residuals, ReLU6,
+width-specific BatchNorm parameters/statistics), avg/max/mix global pooling for
+both model families, optional sandwich sampling and training-only population BN
+recalibration. A common model dispatcher retains one training/export pipeline.
+Validation aggregates every selected width-duration configuration equally. The
+progress callback reports epoch timing, best checkpoint, LR, patience and recent
+mean ETA. New shared runs nest subnet records in one primary report.json; legacy
+per-subnet reports and CREST registry access remain supported.
+
+Verification for this extension: 50 unit/integration tests passed in the existing
+tinyml-tf environment. Tests include actual shared MobileNet training, all nine
+width-duration combinations, FP32/INT8 conversion and CPU invocation, BN isolation
+and recalibration, frozen-subnet equality, gradient summation, callback ETA and
+checkpoint restoration. A separate real UrbanSound8K diagnostic run (four files
+per split, two epochs, width 0.25, 1.5 seconds, max pooling) completed and exported
+FP32/INT8 models. These small runs do not measure full-dataset accuracy gains.
+
+Export now records static Micro resolver/operator checks, including int8
+concat/reduce-max scale constraints. Exported input batch and temporal dimensions
+are fixed. Firmware/operator-version validation and ESP-NN acceleration, SRAM,
+latency and physical board execution remain unverified.
+
 Verification commands:
 
 ```sh

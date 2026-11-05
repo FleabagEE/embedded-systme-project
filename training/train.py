@@ -13,7 +13,7 @@ import numpy as np
 from training.artifacts import update_report, utc_now, finalize_hashes, read_report
 from training.utils import (WIDTHS, atomic_write, canonical_name, configure_runtime,
                             duration_token, export_durations, load_config,
-                            software_versions, training_durations, validate_config)
+                            software_versions, training_durations, validate_config, selected_widths)
 
 
 def parser():
@@ -39,6 +39,7 @@ def for_duration(dataset, duration):
 def validate_epoch(model, dataset, config, widths, classes, synthetic):
     import tensorflow as tf
     from evaluation.metrics import classification_metrics
+    from training.models import outputs_logits
     row = {}
     shared = config['model']['width'] == 'all'
     durations = training_durations(config)
@@ -48,9 +49,9 @@ def validate_epoch(model, dataset, config, widths, classes, synthetic):
             for x, y, file_ids in dataset.batches(training=False, duration=duration):
                 output = model(x, width=width, training=False) if shared else model(x, training=False)
                 logits.extend(output.numpy()); labels.extend(y.tolist()); ids.extend(file_ids)
-            metric = classification_metrics(labels, np.asarray(logits), ids, classes, 'val', synthetic)
+            metric = classification_metrics(labels, np.asarray(logits), ids, classes, 'val', synthetic, from_logits=outputs_logits(config))
             tag = f'{width}_{duration_token(duration)}'
-            row[f'val_loss_{tag}'] = float(tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(labels, np.asarray(logits), from_logits=True)))
+            row[f'val_loss_{tag}'] = float(tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(labels, np.asarray(logits), from_logits=outputs_logits(config))))
             row[f'val_accuracy_{tag}'] = metric['accuracy']
             row[f'val_macro_f1_{tag}'] = metric['macro_f1']
         for metric in ('accuracy', 'macro_f1'):
@@ -60,8 +61,8 @@ def validate_epoch(model, dataset, config, widths, classes, synthetic):
             row[f'val_{metric}_{width}'] = float(np.mean([row[f'val_{metric}_{width}_{duration_token(d)}'] for d in durations]))
     for metric in ('loss', 'accuracy', 'macro_f1'):
         row[f'val_{metric}'] = float(np.mean([row[f'val_{metric}_{w}'] for w in widths]))
-    weights = config['all_width_training']['loss_weights'] if shared else [1.]
-    row['val_total_loss'] = sum(weight * row[f'val_loss_{w}'] for w, weight in zip(widths, weights))
+    weights = dict(zip(WIDTHS,config['all_width_training']['loss_weights'])) if shared else {widths[0]:1.}
+    row['val_total_loss'] = sum(weights[w] * row[f'val_loss_{w}'] for w in widths)
     row['val_loss'] = row['val_total_loss']
     return row
 
@@ -80,7 +81,8 @@ def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, sk
         return completed
     run = create_run(config, run_id)
     source = 'synthetic_smoke_only' if dry_run else 'UrbanSound8K'
-    update_report(run, configuration_hash=experiment_key(config, dry_run, limit), seed=config['training']['seed'],
+    from training.models import model_metadata
+    update_report(run, model=model_metadata(config), configuration_hash=experiment_key(config, dry_run, limit), seed=config['training']['seed'],
                   software_versions=software_versions(), data_source=source,
                   state={**read_report(run)['state'], 'status': 'training', 'started_at': utc_now()})
     print(f'Run: {run}', flush=True)
@@ -111,12 +113,12 @@ def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, sk
 
 def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False):
     from training.dataset import make_datasets
-    from training.dscnn import SharedCNN, build_model, architecture_metadata
+    from training.models import build_shared_model, build_model, architecture_metadata, outputs_logits
     from training.features import feature_shape
-    from training.losses import shared_train_step
+    from training.losses import shared_train_step, sample_widths
     from training.registry import register_artifact
     from training.runtime import runtime_info
-    from training.control import training_callbacks, epoch_message
+    from training.control import training_callbacks
     from evaluation.evaluate import evaluate_artifact
     from quantization.convert_int8 import export_artifact
 
@@ -130,35 +132,41 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
         manifest.update(metadata_path=str(path.resolve()), metadata_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
     update_report(run, software_versions=versions, dataset_manifest=manifest)
     shared = config['model']['width'] == 'all'
-    widths = list(WIDTHS) if shared else [config['model']['width']]
+    widths = selected_widths(config)
     durations = training_durations(config)
-    model = SharedCNN(config) if shared else build_model(config)
+    model = build_shared_model(config) if shared else build_model(config)
     model(tf.zeros([1, *feature_shape(config['audio'])]))
-    update_report(run, architecture=architecture_metadata(model, config, '1' if shared else widths[0], durations[0]))
+    reference_width = max(widths, key=lambda w: WIDTHS[w])
+    update_report(run, architecture=architecture_metadata(model, config, reference_width, durations[0]))
     optimizer_type = tf.keras.optimizers.Adam if config['training']['optimizer'] == 'adam' else tf.keras.optimizers.SGD
     optimizer = optimizer_type(learning_rate=config['training']['learning_rate'])
-    weights = config['all_width_training']['loss_weights'] if shared else [1.]
+    weights = dict(zip(WIDTHS,config['all_width_training']['loss_weights'])) if shared else {widths[0]:1.}
     best_weights = work / ('shared_best.weights.h5' if shared else 'best.weights.h5')
-    callbacks, early = training_callbacks(model, optimizer, config['training'], best_weights)
+    epochs = 1 if dry_run else config['training']['epochs']
+    callbacks, early = training_callbacks(model, optimizer, config['training'], best_weights, durations=durations, widths=widths, epochs=epochs)
 
     @tf.function(reduce_retracing=True)
-    def step(x, y):
+    def step(x, y, active_widths):
         if shared:
-            return shared_train_step(model, optimizer, x, y, weights)
+            return shared_train_step(model, optimizer, x, y, weights, widths=active_widths)
         with tf.GradientTape() as tape:
             logits = model(x, training=True)
-            loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y, logits, from_logits=True))
+            loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y, logits, from_logits=outputs_logits(config)))
         optimizer.apply_gradients(zip(tape.gradient(loss, model.trainable_variables), model.trainable_variables))
         return loss, {widths[0]: loss}, {widths[0]: logits}
 
     history = []
-    epochs = 1 if dry_run else config['training']['epochs']
     for epoch in range(epochs):
+        for callback in callbacks:
+            callback.on_epoch_begin(epoch)
+        width_rng = np.random.default_rng(np.random.SeedSequence([config['training']['seed'],epoch,7919]))
+        width_counts = {w:0 for w in widths}
         n, total = 0, 0.
         loss_sum, correct = {w: 0. for w in widths}, {w: 0 for w in widths}
         duration_counts = {d: 0 for d in durations}
         for x, y, _ in datasets['train'].batches(epoch):
-            loss, losses, logits = step(x, y)
+            active_widths = tuple(str(w) for w in sample_widths(config,width_rng)) if shared else tuple(widths)
+            loss, losses, logits = step(x, y, active_widths)
             if not np.isfinite(float(loss)):
                 raise FloatingPointError(f'Nonfinite training loss at epoch {epoch + 1}')
             if epoch == 0 and n == 0:
@@ -169,14 +177,17 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
             seconds = next(d for d in durations if feature_shape(config['audio'], d)[0] == x.shape[1])
             duration_counts[seconds] += len(y)
             n += len(y); total += float(loss) * len(y)
-            for w in widths:
+            for w in active_widths:
+                width_counts[w] += len(y)
                 loss_sum[w] += float(losses[w]) * len(y)
                 correct[w] += int(np.sum(np.argmax(logits[w].numpy(), axis=1) == y))
         row = {'total_loss': total / n}
         row.update({f'train_samples_{duration_token(d)}': count for d, count in duration_counts.items()})
         for w in widths:
-            row[f'loss_{w}'], row[f'accuracy_{w}'] = loss_sum[w] / n, correct[w] / n
-        row['accuracy'] = float(np.mean([row[f'accuracy_{w}'] for w in widths]))
+            row[f'train_samples_width_{w}'] = width_counts[w]
+            row[f'loss_{w}'] = loss_sum[w]/width_counts[w] if width_counts[w] else None
+            row[f'accuracy_{w}'] = correct[w]/width_counts[w] if width_counts[w] else None
+        row['accuracy'] = float(np.mean([row[f'accuracy_{w}'] for w in widths if width_counts[w]]))
         row.update(validate_epoch(model, datasets['val'], config, widths, classes, dry_run))
         if not np.isfinite(row['val_accuracy']):
             raise FloatingPointError('Validation must provide finite val_accuracy before checkpoint callbacks')
@@ -192,7 +203,9 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
         writer = csv.DictWriter(stream, fieldnames=list(row))
         writer.writeheader(); writer.writerows(history)
         atomic_write(run / 'history.csv', stream.getvalue())
-        print(epoch_message(epoch + 1, epochs, row, config['training'], durations, widths), flush=True)
+        update_report(run,timing={'training_elapsed_seconds':row['training_elapsed_seconds'],
+                                  'epoch_elapsed_seconds':[item['epoch_seconds'] for item in history],
+                                  'eta_method':'moving mean of recent epochs; excludes export; early stopping may finish sooner'})
         if model.stop_training:
             print(f'Early stopping: monitor={early.monitor}; restoring epoch {early.best_epoch + 1}', flush=True)
             break
@@ -201,6 +214,8 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
     atomic_write(final_checkpoint, best_weights.read_bytes())
     best_row = history[int(early.best_epoch)]
     update_report(run, validation={'accuracy': best_row['val_accuracy'], 'macro_f1': best_row['val_macro_f1'],
+                      'by_configuration': {w: {duration_token(d): {'accuracy':best_row[f'val_accuracy_{w}_{duration_token(d)}'],
+                          'macro_f1':best_row[f'val_macro_f1_{w}_{duration_token(d)}']} for d in durations} for w in widths},
                       'per_duration': {duration_token(d): {'accuracy': best_row[f'val_accuracy_{duration_token(d)}'],
                           'macro_f1': best_row[f'val_macro_f1_{duration_token(d)}']} for d in durations}}, checkpoint={'monitor': early.monitor, 'best_value': float(early.best),
                                     'best_epoch': int(early.best_epoch) + 1, 'epochs_executed': len(history),
@@ -216,6 +231,8 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
                 probe = np.random.default_rng(config['training']['seed']).normal(size=(2, *feature_shape(config['audio'], duration))).astype(np.float32)
                 maximum_error = max(maximum_error, float(np.max(np.abs(frozen(probe).numpy() - model(probe, width=w).numpy()))))
                 np.testing.assert_allclose(frozen(probe).numpy(), model(probe, width=w).numpy(), rtol=1e-5, atol=1e-5)
+        from quantization.recalibrate_bn import recalibrate_batch_norm
+        recalibration = recalibrate_batch_norm(frozen,datasets['train'],config,config['quantization'].get('bn_recalibration_samples',0))
         frozen_path = work / f'frozen_{w}.keras'
         frozen.save(frozen_path)
         atomic_write(artifact / 'best.keras', frozen_path.read_bytes())
@@ -225,10 +242,11 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
                 'training_duration_secs': durations, 'class_mapping': classes, 'data_source': source,
                 'diagnostic_subset': dry_run or limit is not None, 'dataset_limit': limit, 'synthetic_count': limit or 12,
                 'registry_root': str(Path(config['runtime']['output_dir']).resolve()),
-                'frozen_supernet_max_abs_error': maximum_error if shared else None}
-        update_report(artifact, metadata=meta, deployment={'status': 'host_validated_only',
+                'frozen_supernet_max_abs_error': maximum_error if shared else None,
+                'equivalence_checked_before_bn_recalibration': shared}
+        update_report(artifact, metadata=meta, bn_recalibration=recalibration, deployment={'status': 'host_validated_only',
                       'device_measurements': None, 'tensor_arena_bytes': None,
-                      'note': 'Built-in Conv2D/DepthwiseConv2D/ReLU/GAP/Dense; MCU/backend support and arena require physical validation.'}, architecture=architecture_metadata(frozen, config, w, durations[0]))
+                      'note': 'Static built-in operators audited at export; target firmware registration, optimized kernels and arena require device validation.'}, architecture=architecture_metadata(frozen, config, w, durations[0]))
         for duration in export_durations(config):
             export_artifact(artifact, config, datasets['train'], duration=duration, skip_int8=skip_int8)
             evaluate_artifact(artifact, for_duration(datasets['val'], duration), config, classes, duration=duration, synthetic=dry_run)

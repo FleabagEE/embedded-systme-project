@@ -12,11 +12,12 @@ def softmax(logits):
     return z / z.sum(axis=-1, keepdims=True)
 
 
-def classification_metrics(labels, logits, file_ids, class_mapping, split, synthetic=False):
+def classification_metrics(labels, logits, file_ids, class_mapping, split, synthetic=False, from_logits=True):
     if len(labels) != len(logits) or len(labels) != len(file_ids) or not len(labels):
         raise ValueError('Nonempty labels, logits and original file IDs must have equal length')
     groups = {}
-    for label, probability, file_id in zip(labels, softmax(logits), file_ids):
+    probabilities = softmax(logits) if from_logits else np.asarray(logits)
+    for label, probability, file_id in zip(labels, probabilities, file_ids):
         if file_id not in groups:
             groups[file_id] = [int(label), []]
         if groups[file_id][0] != int(label):

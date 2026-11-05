@@ -1,4 +1,4 @@
-"""One run.json per artifact, with lossless support for older split JSON records."""
+"""One experiment report, including static subnet records; legacy reports remain readable."""
 from __future__ import annotations
 import argparse
 import fcntl
@@ -36,6 +36,9 @@ def legacy_files(artifact):
 
 def read_report(artifact):
     root = Path(artifact)
+    target, key = report_target(root)
+    if key is not None:
+        return read_json(target / 'report.json').get('subnets', {}).get(key, {'schema_version': 4})
     for name in ('report.json', 'run.json'):
         if (root / name).is_file():
             return read_json(root / name)
@@ -61,26 +64,38 @@ def read_report(artifact):
     return report
 
 
-def update_report(artifact, **sections):
-    root = Path(artifact)
-    root.mkdir(parents=True, exist_ok=True)
+def report_target(artifact):
+    artifact = Path(artifact).resolve()
+    if (artifact / 'report.json').exists() or (artifact / 'run.json').exists():
+        return artifact, None
+    for parent in artifact.parents:
+        path = parent / 'report.json'
+        if path.is_file() and read_json(path).get('centralized_artifacts'):
+            return parent, str(artifact.relative_to(parent))
+    return artifact, None
+
+
+def mutate_report(artifact, mutation):
+    Path(artifact).mkdir(parents=True, exist_ok=True)
+    root, key = report_target(artifact)
     with report_lock(root).open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        report = read_report(root)
-        report.update(sections)
-        report['updated_at'] = utc_now()
-        save_json(root / 'report.json', report)
-    return report
+        document = read_report(root)
+        section = document if key is None else document.setdefault('subnets', {}).setdefault(key, {'schema_version': 4})
+        mutation(section)
+        section['updated_at'] = document['updated_at'] = utc_now()
+        save_json(root / 'report.json', document)
+    return section
+
+
+def update_report(artifact, **sections):
+    return mutate_report(artifact, lambda report: report.update(sections))
 
 
 def store_result(artifact, section, duration, key, value):
-    root = Path(artifact)
-    with report_lock(root).open('a') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        report = read_report(root)
+    def store(report):
         report.setdefault(section, {}).setdefault(duration_token(duration), {})[key] = value
-        report['updated_at'] = utc_now()
-        save_json(root / 'report.json', report)
+    return mutate_report(artifact, store)
 
 
 def utc_now():

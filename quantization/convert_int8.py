@@ -29,7 +29,7 @@ def convert_model(model, representative=None):
 
 def export_artifact(artifact, config, train_dataset, *, duration=None, skip_int8=False):
     import tensorflow as tf
-    from training.dscnn import fix_input_shape, architecture_metadata
+    from training.models import fix_input_shape, architecture_metadata
     from quantization.validate_int8 import TFLiteRunner
     artifact = Path(artifact)
     duration = config['audio']['duration_sec'] if duration is None else duration
@@ -77,6 +77,8 @@ def export_artifact(artifact, config, train_dataset, *, duration=None, skip_int8
                             'filename': str((target / f'{kind}.tflite').relative_to(artifact)),
                             'sha256': hashlib.sha256(content).hexdigest(),
                             'architecture': architecture_metadata(fixed, config, run_meta['effective_width'], duration)})
+            from quantization.operators import audit_operators
+            details['micro_compatibility'] = audit_operators(runner)
             atomic_write(target / f'{kind}.tflite', content)
             store_result(artifact, 'exports', duration, kind, details)
         except Exception as exc:

@@ -7,6 +7,7 @@ import tensorflow as tf
 
 from training.features import feature_shape
 from training.utils import WIDTHS, canonical_name, width_token
+from training.pooling import static_pool, shared_pool, classifier_prefix
 
 
 def channels(base_channels, width):
@@ -25,7 +26,8 @@ def build_model(config, width=None, time_frames=None):
     if width == 'all':
         raise ValueError('Use SharedCNN for width=all; build_model freezes one effective width')
     m = config['model']
-    inputs = tf.keras.Input(shape=(time_frames, config['audio']['n_mels'], 1), name='log_mel')
+    inputs = tf.keras.Input(shape=(time_frames, config['audio']['n_mels'], 1),
+                            batch_size=1 if time_frames is not None else None, name='log_mel')
     x = inputs
     for i, out_channels in enumerate(channels(m['base_channels'], width)):
         if block_type(config, i) == 'SC':
@@ -36,7 +38,7 @@ def build_model(config, width=None, time_frames=None):
                                                 use_bias=False, depthwise_initializer='he_normal', name=f'depthwise_{i}')(x)
             x = tf.keras.layers.Conv2D(out_channels, 1, padding='same', kernel_initializer='he_normal', name=f'pointwise_{i}')(x)
         x = tf.keras.layers.ReLU(name=f'relu_{i}')(x)
-    x = tf.keras.layers.GlobalAveragePooling2D(name='global_average_pooling')(x)
+    x = static_pool(x, m.get('pooling', 'avg'))
     outputs = tf.keras.layers.Dense(m['num_classes'], name='logits')(x)
     return tf.keras.Model(inputs, outputs, name=canonical_name(config, width))
 
@@ -70,13 +72,14 @@ class SharedCNN(tf.keras.Model):
         # Config is metadata, not Trackable state. Tracking a caller-owned dict
         # can mutate its nested values into wrappers that YAML cannot serialize.
         self.config_spec = self._no_dependency(copy.deepcopy(config))
+        self.output_logits = True
         m = config['model']
         previous = 1
         self.blocks = []
         for i, out_channels in enumerate(m['base_channels']):
             self.blocks.append(SharedBlock(previous, out_channels, m['kernel_size'], block_type(config, i), name=f'shared_block_{i}'))
             previous = out_channels
-        self.classifier_kernel = self.add_weight('classifier_kernel', (previous, m['num_classes']), initializer='glorot_uniform')
+        self.classifier_kernel = self.add_weight('classifier_kernel', (previous * (2 if m.get('pooling', 'avg') == 'mix' else 1), m['num_classes']), initializer='glorot_uniform')
         self.classifier_bias = self.add_weight('classifier_bias', (m['num_classes'],), initializer='zeros')
 
     def call(self, inputs, width='1', training=False):
@@ -84,8 +87,10 @@ class SharedCNN(tf.keras.Model):
         x = inputs
         for block, count in zip(self.blocks, counts):
             x = block(x, output_channels=count)
-        x = tf.reduce_mean(x, axis=[1, 2])
-        return tf.matmul(x, self.classifier_kernel[:counts[-1], :]) + self.classifier_bias
+        mode = self.config_spec['model'].get('pooling', 'avg')
+        x = shared_pool(x, mode)
+        kernel = classifier_prefix(self.classifier_kernel, counts[-1], self.config_spec['model']['base_channels'][-1], mode)
+        return tf.matmul(x, kernel) + self.classifier_bias
 
     def freeze(self, width, time_frames=None):
         model = build_model(self.config_spec, width, time_frames)
@@ -98,7 +103,8 @@ class SharedCNN(tf.keras.Model):
                 layer = model.get_layer(f'conv_{i}')
             layer.set_weights([block.kernel.numpy()[:, :, :previous, :count], block.bias.numpy()[:count]])
             previous = count
-        model.get_layer('logits').set_weights([self.classifier_kernel.numpy()[:previous, :], self.classifier_bias.numpy()])
+        kernel = classifier_prefix(self.classifier_kernel, previous, self.config_spec['model']['base_channels'][-1], self.config_spec['model'].get('pooling', 'avg'))
+        model.get_layer('logits').set_weights([kernel.numpy(), self.classifier_bias.numpy()])
         return model
 
 
@@ -123,12 +129,13 @@ def architecture_metadata(model, config, width, duration):
             macs += frames * mels * (k * k * previous + previous * count)
         block_shapes.append([frames, mels, count])
         previous = count
-    macs += previous * config['model']['num_classes']
+    macs += previous * (2 if config['model'].get('pooling', 'avg') == 'mix' else 1) * config['model']['num_classes']
     return {'num_parameters': model.count_params(), 'estimated_macs': macs,
-            'macs_method': 'One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/GAP/frontend.',
+            'macs_method': 'One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.',
             'duration_sec': duration, 'input_shape': [1, *shape],
             'output_shape': [1, config['model']['num_classes']], 'block_output_shapes': block_shapes,
             'channels': channels(config['model']['base_channels'], width),
+            'pooling': config['model'].get('pooling', 'avg'),
             'block_types': [block_type(config, i) for i in range(config['model']['num_blocks'])],
             'normalization': 'BN-free; bias and ReLU after each SC or DW+pointwise block',
             'weight_float32_bytes': sum(int(np.prod(v.shape)) * 4 for v in model.weights),

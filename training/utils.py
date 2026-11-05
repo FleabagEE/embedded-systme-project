@@ -30,7 +30,13 @@ def width_token(value):
 
 
 def canonical_name(config, width=None):
+    if config['model'].get('architecture', 'dscnn') == 'mobilenetv2':
+        return f"MobileNetV2Tiny_{config['audio']['n_mels']}_{width_token(config['model']['width'] if width is None else width)}"
     return f"DSCNN_{config['audio']['n_mels']}_{config['model']['conv_type']}_{width_token(config['model']['width'] if width is None else width)}"
+
+
+def selected_widths(config):
+    return [width_token(w) for w in config['model'].get('width_options', list(WIDTHS))] if config['model']['width'] == 'all' else [config['model']['width']]
 
 
 def duration_token(duration):
@@ -85,8 +91,8 @@ def validate_config(c, *, training=True):
     m['width'] = width_token(m['width'])
     if a['sample_rate'] != 16000 or a['duration_sec'] not in SUPPORTED_DURATIONS or a['n_mels'] not in (40, 64):
         raise ValueError('Use 16000 Hz, duration_sec 1/1.5/2, and n_mels 40/64')
-    if m['conv_type'] not in ('SC', 'DW') or not m['global_average_pooling']:
-        raise ValueError('conv_type must be SC/DW and global_average_pooling must be true')
+    if m['conv_type'] not in ('SC', 'DW') or not m['global_average_pooling'] or m.get('pooling', 'avg') not in ('avg', 'max', 'mix'):
+        raise ValueError('Use SC/DW, global pooling, and pooling=avg/max/mix')
     if m['num_blocks'] != len(m['base_channels']) or not m['base_channels'] or any(type(x) is not int or x < 1 for x in m['base_channels']):
         raise ValueError('base_channels must contain one positive integer per num_blocks')
     if type(m['kernel_size']) is not int or m['kernel_size'] < 1 or m['num_classes'] < 2:
@@ -136,8 +142,28 @@ def validate_config(c, *, training=True):
         raise ValueError('quantization.formats must contain fp32 and/or int8')
     if c['runtime']['device'] not in ('cpu', 'gpu', 'cuda', 'auto'):
         raise ValueError('runtime.device must be cpu, cuda, or auto (gpu aliases cuda)')
-    if m.get('architecture', 'dscnn') != 'dscnn':
-        raise ValueError('Only the existing dscnn architecture is implemented (SC/DW)')
+    if m.get('architecture', 'dscnn') not in ('dscnn', 'mobilenetv2'):
+        raise ValueError('model.architecture must be dscnn or mobilenetv2')
+    options = [width_token(w) for w in m.get('width_options', list(WIDTHS))]
+    if not options or 'all' in options or len(set(options)) != len(options):
+        raise ValueError('width_options must be unique tokens from 1/5/25')
+    if aw.get('strategy', 'all') not in ('all', 'sandwich') or type(aw.get('sandwich_random_widths', 1)) is not int or aw.get('sandwich_random_widths', 1) < 0:
+        raise ValueError('Invalid shared-width strategy or sandwich_random_widths')
+    if m.get('architecture', 'dscnn') == 'mobilenetv2':
+        stages = m.get('stage_channels', [16,24,32,48])
+        strides = m.get('stage_strides', [1,2,2,1]); repeats = m.get('stage_repeats', [1,2,2,1])
+        if not m.get('standard_stem', True):
+            raise ValueError('MobileNetV2-Tiny requires its standard convolution stem')
+        if not stages or len(stages) != len(strides) or len(stages) != len(repeats) or any(type(x) is not int or x < 1 for x in [*stages, *repeats, m.get('stem_channels',16), m.get('expansion_ratio',3)]) or any(s not in (1,2) for s in strides):
+            raise ValueError('Invalid MobileNetV2 stem/stages/repeats/strides/expansion_ratio')
+        bn = m.get('batch_norm', {})
+        if not 0 <= bn.get('momentum',.9) < 1 or bn.get('epsilon',.001) <= 0:
+            raise ValueError('Invalid BatchNorm momentum/epsilon')
+    if type(q.get('bn_recalibration_samples', 0)) is not int or q.get('bn_recalibration_samples', 0) < 0:
+        raise ValueError('bn_recalibration_samples must be a nonnegative integer')
+    if (type(t.get('eta_window', 5)) is not int or t.get('eta_window', 5) < 1
+            or type(t.get('eta_min_epochs', 2)) is not int or t.get('eta_min_epochs', 2) < 2):
+        raise ValueError('ETA requires a positive window and at least two epochs')
     return c
 
 

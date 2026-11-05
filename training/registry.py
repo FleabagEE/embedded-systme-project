@@ -78,7 +78,7 @@ def create_run(config, run_id=None):
         except FileExistsError:
             sequence += 1
             continue
-        update_report(run, schema_version=3, experiment={'id': name, 'sequence': sequence,
+        update_report(run, schema_version=4, centralized_artifacts=True, experiment={'id': name, 'sequence': sequence,
                       'architecture': architecture, 'label': run_id}, config=config,
                       seed=config['training']['seed'], software_versions=software_versions(),
                       state={'status': 'allocated', 'created_at': utc_now()},
@@ -187,6 +187,8 @@ def write_summary(output_root):
             rows.append({'experiment_id': report['experiment']['id'], 'sequence': report['experiment']['sequence'],
                          'architecture': report['experiment']['architecture'], 'status': state['status'],
                          'seed': config['training']['seed'], 'conv_type': config['model']['conv_type'],
+                         'pooling': config['model'].get('pooling', 'avg'),
+                         'expansion_ratio': config['model'].get('expansion_ratio', 3) if report['experiment']['architecture'] == 'mobilenetv2' else None,
                          'width': config['model']['width'], 'n_mels': config['audio']['n_mels'],
                          'durations': json.dumps(config['training'].get('duration_secs') or [config['audio']['duration_sec']]),
                          'best_epoch': (report.get('checkpoint') or {}).get('best_epoch'),

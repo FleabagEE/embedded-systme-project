@@ -51,7 +51,8 @@ def verify_training_device(config):
     or initial weights. Host-only initializer/shape helpers may use CPU.
     """
     import tensorflow as tf
-    from training.dscnn import SharedCNN, build_model
+    from training.models import build_shared_model, build_model, outputs_logits
+    from training.utils import selected_widths
     from training.features import feature_shape
     from training.losses import width_losses
     if not _selection:
@@ -61,7 +62,7 @@ def verify_training_device(config):
     seed = config['training']['seed']
     try:
         with tf.device(selected):
-            model = SharedCNN(config) if shared else build_model(config)
+            model = build_shared_model(config) if shared else build_model(config)
             shape = feature_shape(config['audio'])
             # Generate input on the host without consuming the experiment RNG.
             x = tf.convert_to_tensor(np.random.default_rng(seed).normal(size=(2, *shape)).astype(np.float32))
@@ -74,11 +75,11 @@ def verify_training_device(config):
             def gradients():
                 with tf.GradientTape() as tape:
                     if shared:
-                        loss, _, outputs = width_losses(model, x, y, config['all_width_training']['loss_weights'])
+                        loss, _, outputs = width_losses(model, x, y, config['all_width_training']['loss_weights'], widths=selected_widths(config))
                     else:
                         output = model(x, training=True)
                         outputs = {config['model']['width']: output}
-                        loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y, output, from_logits=True))
+                        loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y, output, from_logits=outputs_logits(config)))
                 return loss, outputs, tape.gradient(loss, model.trainable_variables)
 
             loss, outputs, grads = gradients()

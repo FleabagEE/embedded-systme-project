@@ -10,13 +10,13 @@ from training.utils import configure_runtime, duration_token, load_config, SUPPO
 from training.artifacts import config_path, read_report, store_result, update_report
 
 
-def evaluate_predictor(predict, dataset, classes, synthetic=False):
+def evaluate_predictor(predict, dataset, classes, synthetic=False, from_logits=True):
     logits, labels, ids = [], [], []
     for x, y, file_ids in dataset.batches(training=False):
         logits.extend(np.asarray(predict(x)))
         labels.extend(y.tolist())
         ids.extend(file_ids)
-    return classification_metrics(labels, np.asarray(logits), ids, classes, dataset.split, synthetic)
+    return classification_metrics(labels, np.asarray(logits), ids, classes, dataset.split, synthetic, from_logits=from_logits)
 
 
 def artifact_directories(path):
@@ -31,31 +31,31 @@ def artifact_directories(path):
 
 def evaluate_artifact(artifact, dataset, config, classes, *, duration=None, synthetic=False, diagnostic_subset=False):
     import tensorflow as tf
+    from training.models import outputs_logits, build_shared_model
     from quantization.validate_int8 import TFLiteRunner
     artifact = Path(artifact)
     duration = config['audio']['duration_sec'] if duration is None else duration
     config = copy.deepcopy(config)
     config['audio']['duration_sec'] = duration
     model = tf.keras.models.load_model(artifact / 'best.keras', compile=False)
-    results = {'keras_fp32': evaluate_predictor(lambda x: model(x, training=False).numpy(), dataset, classes, synthetic)}
+    results = {'keras_fp32': evaluate_predictor(lambda x: model(x, training=False).numpy(), dataset, classes, synthetic, from_logits=outputs_logits(config))}
     for fmt, filename in [('fp32_tflite', 'fp32.tflite'), ('int8_tflite', 'int8.tflite')]:
         path = artifact / 'exports' / duration_token(duration) / filename
         if path.is_file():
-            results[fmt] = evaluate_predictor(TFLiteRunner(path, require_int8=fmt == 'int8_tflite'), dataset, classes, synthetic)
+            results[fmt] = evaluate_predictor(TFLiteRunner(path, require_int8=fmt == 'int8_tflite'), dataset, classes, synthetic, from_logits=outputs_logits(config))
     meta = read_report(artifact)['metadata']
     if meta.get('trained_parent'):
-        from training.dscnn import SharedCNN
         # Prefer a colocated checkpoint if the entire run has been moved.
         local_parent = artifact.parent.parent
         parent = local_parent if (local_parent / 'shared_best.weights.h5').is_file() else Path(meta['parent_run_path'])
         checkpoint = parent / 'shared_best.weights.h5'
         if checkpoint.is_file():
-            supernet = SharedCNN(config)
+            supernet = build_shared_model(config)
             from training.features import feature_shape
             supernet(np.zeros([1, *feature_shape(config['audio'])], np.float32))
             supernet.load_weights(checkpoint)
             results['shared_supernet_fp32'] = evaluate_predictor(
-                lambda x: supernet(x, width=meta['effective_width'], training=False).numpy(), dataset, classes, synthetic)
+                lambda x: supernet(x, width=meta['effective_width'], training=False).numpy(), dataset, classes, synthetic, from_logits=outputs_logits(config))
     for record in results.values():
         record.update({'trained_parent': meta.get('trained_parent'), 'effective_width': meta['effective_width'],
                        'run_id': meta['run_id'], 'trained_duration_sec': meta['trained_duration_sec'],
