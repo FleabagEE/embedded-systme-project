@@ -89,6 +89,104 @@ the most recent `training.eta_window` epochs (default 5). It excludes export and
 can overstate time if early stopping ends training sooner. Timings are also stored
 in the primary report; full epoch metrics remain only in history.csv.
 
+## Fixed-crop and sliding-window validation
+
+New configurations and Colab default to `validation.method: sliding_window`.
+Historical experiment configs without a `validation` section continue to use
+`fixed`; loading or evaluating them does not silently adopt the new default.
+
+```yaml
+validation:
+  method: sliding_window       # fixed | sliding_window
+  stride_seconds: 0.5
+  aggregation: mean_probability # mean_probability | max_probability
+  batch_size: 32
+  include_last_window: true
+  short_clip_padding: zero
+  cache_features: true
+```
+
+`fixed` preserves the existing `evaluation.num_crops` protocol (default 3): evenly
+spaced, rounded and deduplicated crop positions, a center crop when count=1,
+centered zero padding for short audio, and mean probabilities per original file.
+It retains the existing training batch size for inference batching. All
+sliding-only settings above are ignored in this mode, including aggregation.
+
+`sliding_window` loads the complete mono/resampled clip, converts duration and
+stride to integer samples with `round(seconds * sample_rate)`, and starts windows
+at `0, stride_samples, ...` while the window fits. With `include_last_window=true`,
+it appends `clip_samples-window_samples` if needed, so the last window reaches the
+end exactly and never duplicates an existing start. Setting it false explicitly
+omits an unaligned tail. Short or empty clips yield one window, zero-padded on the
+right. For a 4-second clip, stride 0.5 produces 7 / 6 / 5 windows for 1 / 1.5 / 2
+second models. Stride is configurable; choosing a stride larger than the input
+window leaves gaps between windows.
+
+Every window uses the same deterministic Log-Mel frontend and feature
+normalization as the fixed protocol, with no random crops, waveform augmentation
+or spectrogram masks. DS-CNN logits are softmaxed per window; MobileNet's softmax
+outputs are used directly. `mean_probability` averages class probabilities across
+windows; `max_probability` takes their per-class maximum. Argmax produces one
+prediction per clip, then accuracy and macro-F1 use the original class mapping
+(including absent classes as zero F1). `mean_logits` is not implemented.
+
+Every epoch evaluates all selected width-duration configurations. The checkpoint
+metric is their **equal-weight mean of clip accuracies**, never pooled window
+accuracy. Checkpoint, early stopping and LR reduction still monitor this same
+`val_accuracy`. `val_loss` retains mean per-window cross-entropy; it does not select
+checkpoints. Changing validation does not alter training crops, augmentations,
+shared-width sampling, gradient updates or training-only INT8 calibration.
+
+Windows of the same duration are batched with `validation.batch_size`. The trainer
+preprocesses a batch once and runs every selected width on it. A private temporary
+cache saves unaugmented resampled audio and exact per-window features across
+widths, durations, epochs and post-export evaluation. This avoids decoding or
+resampling the same validation clip repeatedly. Caches are isolated per run/config
+and removed with the training workspace; no predictions are cached. Disable with
+`validation.cache_features=false` to trade extra preprocessing for less temporary
+disk usage. RAM is bounded by batches and one clip's windows; the default cache
+can occupy hundreds of MB of temporary disk for the full validation fold.
+Arbitrary final offsets may not align with the STFT hop, so the implementation
+extracts each window exactly instead of slicing a whole-clip spectrogram.
+
+Epoch logs and history.csv separate training and validation seconds and count
+unique clips, windows summed across durations, and window predictions across all
+widths. The primary report records the protocol, best-epoch counts/runtime,
+per-configuration clip accuracy/F1/counts, optional preprocessing/inference timing,
+and per-epoch training/validation timing arrays. Inference timings include output
+synchronization/host transfer and are host evaluation timings, not MCU latency.
+Batching/caching preserve the examples and aggregation; floating-point backend
+roundoff is still possible. Protocol settings participate in the existing
+configuration fingerprint, so skip-completed never confuses fixed and sliding runs.
+
+```sh
+# New default: full-clip sliding window, stride 0.5 seconds, mean probabilities.
+"$PY" -m training.train --set validation.method=sliding_window \
+  --set validation.stride_seconds=0.5 --set validation.aggregation=mean_probability
+
+# Retained three-crop protocol.
+"$PY" -m training.train --set validation.method=fixed --set evaluation.num_crops=3
+
+# Compare a saved model using another host protocol. Original evaluation metrics
+# remain under their key; a different protocol gets a distinct report key.
+"$PY" -m evaluation.evaluate --model-dir models/dscnn_001 --split val \
+  --set validation.method=sliding_window --set validation.stride_seconds=0.25
+```
+
+In Colab's existing **Experiment controls** cell, set `validation_method` to
+`fixed` or `sliding_window`, `validation_stride` to the step in seconds, and
+`validation_aggregation` to `mean_probability` or `max_probability`. These controls
+reach both Single Training and Batch Sweep through the existing CLI. Fixed mode
+uses YAML `evaluation.num_crops=3`; stride and aggregation controls then have no
+effect. The evaluation CLI's existing `--num-crops N` explicitly selects fixed mode.
+
+Sliding validation is a host evaluation policy. TFLite input shapes and model
+weight formats remain unchanged. It adds no loops to CREST or hardware profiling:
+one-window MCU latency and multi-window full-clip inference are different modes.
+Full-clip inference requires one forward pass per window and therefore more total
+work; deployment window scheduling and aggregation must be explicitly implemented
+and measured separately if desired.
+
 ## Composable online augmentation
 
 The ordered pipeline is: normalized float WAV read → channel mean → soxr HQ
@@ -120,8 +218,9 @@ Random streams use seed, epoch, retrieval index and worker ID. The loader is
 currently sequential; no unseeded DataLoader workers are started. Rebuilding a
 dataset with the same seed reproduces its sequence; repeated training retrievals
 resample it. Validation/test and calibration bypass both Compose stages entirely.
-Deterministic validation crops are evenly spaced (default 3); probabilities are
-averaged by original file ID before classification. Calibration uses one center
+Validation uses the selected deterministic fixed-crop or sliding-window protocol
+described below; every original file has one aggregated prediction. Calibration
+continues to use one center
 crop from training folds, including the identical feature-normalization step.
 
 Normalization defaults to `none` (identity), preserving the original frontend.

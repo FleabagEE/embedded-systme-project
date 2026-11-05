@@ -10,6 +10,7 @@ def config():
     c['runtime']['device'] = 'cpu'
     c['training']['duration_secs'] = []
     c['evaluation']['num_crops'] = 1
+    c['validation']['method'] = 'fixed' # Legacy regression fixtures retain their protocol.
     c['quantization']['output_duration_secs'] = [1]
     configure_runtime(c)
     return c

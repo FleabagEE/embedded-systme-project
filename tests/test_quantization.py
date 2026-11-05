@@ -90,6 +90,21 @@ class QuantizationIntegrationTests(unittest.TestCase):
             self.assertTrue(all(path.name == 'legacy_config.yaml' for path in config_paths))
             from training.utils import load_config
             self.assertEqual(load_config(config_paths[0])['model']['width'], '5')
+            # A different host evaluation protocol preserves the trained report,
+            # its original metrics, exports and default CREST/registry meaning.
+            previous = read_report(run)
+            sliding = copy.deepcopy(c)
+            sliding['validation'].update(method='sliding_window', aggregation='max_probability', batch_size=2)
+            changed = evaluate_artifact(run, SyntheticDataset(sliding, 'val', 6), sliding,
+                                       {i: f'synthetic_{i}' for i in range(10)}, duration=1, synthetic=True)
+            current = read_report(run)
+            self.assertEqual(previous['evaluation']['1s']['val'], current['evaluation']['1s']['val'])
+            self.assertEqual(previous['config'], current['config'])
+            self.assertEqual(previous['file_hashes'], current['file_hashes'])
+            self.assertEqual(len([key for key in current['evaluation']['1s'] if key.startswith('val_sliding_window_')]), 1)
+            self.assertEqual(changed['int8_tflite']['num_original_files'], 6)
+            self.assertEqual(changed['int8_tflite']['num_windows'], 24)
+            self.assertEqual(changed['int8_tflite']['validation_protocol']['aggregation'], 'max_probability')
 
     def test_shared_smoke_exports_three_static_subnets(self):
         import yaml

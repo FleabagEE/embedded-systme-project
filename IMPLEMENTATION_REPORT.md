@@ -39,6 +39,30 @@ latency and physical board execution remain unverified.
 
 Verification commands:
 
+Sliding-window validation extension: the canonical config and Colab now default
+to deterministic full-clip sliding windows, stride 0.5 seconds and mean probability
+aggregation. Fixed mode keeps the existing crop positions, padding and aggregation;
+historical configs without the new section retain fixed validation. Maximum
+probability aggregation is also available for sliding windows. All width-duration
+clip accuracies receive equal checkpoint weight.
+
+The new host validation module batches windows and caches resampled audio/exact
+features in private temporary directories, with no prediction caching. Reports
+include protocol, clip/window counts, per-configuration metrics and separate
+training/validation timing. Different evaluation protocols use distinct result
+keys and configuration fingerprints. TFLite input shapes, checkpoint formats,
+training/calibration augmentation policy and CREST profiling remain unchanged.
+
+Verification: 61 tests passed in tinyml-tf, including fixed regression, sliding
+positions/tail/padding, cache and batch invariance, fresh predictions, aggregation,
+all model/width/duration combinations, checkpoint selection and Colab overrides.
+A two-epoch CPU diagnostic run on six local UrbanSound8K clips per split evaluated
+105 windows (315 width-window predictions) per epoch and exported/invoked all 18
+FP32/INT8 variants. Its single report was about 145 KB. Validation took about 1.40s
+then 0.37s; initialization/cache effects and this tiny subset prevent treating
+those figures as a representative performance benchmark. No test-fold selection,
+CUDA execution or physical board measurement was performed.
+
 ```sh
 PY=/opt/miniconda3/envs/tinyml-tf/bin/python
 "$PY" -m unittest discover -s tests -v

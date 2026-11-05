@@ -15,6 +15,7 @@ class MobileExportTests(unittest.TestCase):
     def test_shared_mixed_training_exports_reports_and_recalibration(self):
         c = mobile_config()
         c['training']['batch_size'] = 2
+        c['validation'].update(method='sliding_window', batch_size=2)
         c['all_width_training'].update(strategy='sandwich',sandwich_random_widths=1)
         c['quantization'].update(representative_samples=3,bn_recalibration_samples=3)
         with tempfile.TemporaryDirectory() as tmp:
@@ -38,6 +39,11 @@ class MobileExportTests(unittest.TestCase):
             self.assertGreater(report['timing']['training_elapsed_seconds'],0)
             self.assertEqual(len(report['timing']['epoch_elapsed_seconds']),1)
             self.assertIsNone(report['test'])
+            self.assertEqual(report['validation']['protocol']['method'], 'sliding_window')
+            self.assertEqual(report['validation']['num_clips'], 6)
+            self.assertEqual(report['validation']['num_windows'], 6 * (4 + 3 + 2))
+            self.assertEqual(report['validation']['num_window_predictions'], 3 * 6 * (4 + 3 + 2))
+            self.assertGreater(report['validation']['runtime_seconds'], 0)
             by_config = report['validation']['by_configuration']
             self.assertAlmostEqual(report['checkpoint']['best_value'],np.mean([m['accuracy'] for d in by_config.values() for m in d.values()]))
             with (run/'history.csv').open() as stream: row = next(csv.DictReader(stream))

@@ -62,6 +62,14 @@ training:
   min_learning_rate: 0.00001
   eta_window: 5
   eta_min_epochs: 2
+validation:
+  method: sliding_window # fixed preserves the existing evaluation.num_crops protocol.
+  stride_seconds: 0.5
+  aggregation: mean_probability
+  batch_size: 32
+  include_last_window: true
+  short_clip_padding: zero
+  cache_features: true # Temporary, deterministic audio/features only; never predictions.
 evaluation:
   num_crops: 3
   include_confusion_matrix: false

@@ -18,6 +18,36 @@ import yaml
 
 WIDTHS = {'1': 1.0, '5': 0.5, '25': 0.25}
 SUPPORTED_DURATIONS = (1.0, 1.5, 2.0)
+VALIDATION_DEFAULTS = {'method': 'fixed', 'stride_seconds': 0.5, 'aggregation': 'mean_probability',
+                       'batch_size': 32, 'include_last_window': True, 'short_clip_padding': 'zero',
+                       'cache_features': True}
+
+
+def validation_protocol(config):
+    settings = config.get('validation', {})
+    if not isinstance(settings, dict):
+        raise ValueError('validation must be a mapping')
+    method = settings.get('method', 'fixed')
+    if method == 'fixed':
+        # Sliding-only controls never alter or invalidate the legacy protocol.
+        return {'method': 'fixed', 'num_crops': config.get('evaluation', {}).get('num_crops', 1),
+                'aggregation': 'mean_probability'}
+    if method != 'sliding_window':
+        raise ValueError('validation.method must be fixed or sliding_window')
+    settings = {**VALIDATION_DEFAULTS, **settings}
+    stride = settings['stride_seconds']
+    if type(stride) not in (int, float) or not math.isfinite(stride) or stride <= 0 or round(stride * config['audio']['sample_rate']) < 1:
+        raise ValueError('validation.stride_seconds must represent at least one sample')
+    if settings['aggregation'] not in ('mean_probability', 'max_probability'):
+        raise ValueError('validation.aggregation must be mean_probability or max_probability')
+    if type(settings['batch_size']) is not int or settings['batch_size'] < 1:
+        raise ValueError('validation.batch_size must be a positive integer')
+    if any(type(settings[k]) is not bool for k in ('include_last_window', 'cache_features')):
+        raise ValueError('validation include_last_window/cache_features must be booleans')
+    if settings['short_clip_padding'] != 'zero':
+        raise ValueError('Sliding validation supports zero padding only')
+    return {k: settings[k] for k in ('method', 'stride_seconds', 'aggregation', 'batch_size',
+                                    'include_last_window', 'short_clip_padding')}
 
 
 def width_token(value):
@@ -77,6 +107,9 @@ def load_config(path='config.yaml', overrides=(), *, training=True):
     if isinstance(config, dict) and 'config' in config and 'schema_version' in config:
         config = config['config']
     config = copy.deepcopy(config)
+    # Historical artifacts must continue using their original fixed-crop protocol.
+    if 'validation' not in config:
+        config['validation'] = copy.deepcopy(VALIDATION_DEFAULTS)
     for override in overrides:
         set_override(config, override)
     validate_config(config, training=training)
@@ -134,6 +167,7 @@ def validate_config(c, *, training=True):
         raise ValueError('Invalid learning-rate plateau settings')
     if type(c.get('evaluation', {}).get('num_crops', 1)) is not int or c.get('evaluation', {}).get('num_crops', 1) < 1:
         raise ValueError('evaluation.num_crops must be a positive integer')
+    validation_protocol(c)
     if q['representative_samples'] < 1 or not q['int8_in_and_out']:
         raise ValueError('INT8 export needs representative_samples>0 and int8_in_and_out=true')
     if type(q['representative_samples']) is not int:

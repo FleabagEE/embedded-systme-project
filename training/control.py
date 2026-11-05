@@ -45,6 +45,10 @@ class TrainingProgress(tf.keras.callbacks.Callback):
                      f"LR: {logs['learning_rate']:.5g} | Patience: {used}/{self.settings['early_stopping_patience']} "
                      f"(remaining {logs['patience_remaining']})\n"
                      f"ETA: {eta_text} | Checkpoint: {'Saved' if improved else 'No improvement'}")
+        if 'validation_seconds' in logs:
+            self.printer(f"Train: {logs['train_seconds']:.1f}s | Validation: {logs['validation_seconds']:.1f}s "
+                         f"| Clips: {logs['val_num_clips']} | Windows: {logs['val_num_windows']} "
+                         f"| Window predictions (all widths): {logs['val_num_window_predictions']}")
         if len(self.widths) > 1 or len(self.durations) > 1:
             header = 'Validation Accuracy\n             ' + '  '.join(f'{d:.1f}s' for d in self.durations)
             lines = []

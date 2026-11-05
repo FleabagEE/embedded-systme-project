@@ -190,6 +190,7 @@ def write_summary(output_root):
                          'pooling': config['model'].get('pooling', 'avg'),
                          'expansion_ratio': config['model'].get('expansion_ratio', 3) if report['experiment']['architecture'] == 'mobilenetv2' else None,
                          'width': config['model']['width'], 'n_mels': config['audio']['n_mels'],
+                         'validation_method': (validation.get('protocol') or {}).get('method', config.get('validation', {}).get('method', 'fixed')),
                          'durations': json.dumps(config['training'].get('duration_secs') or [config['audio']['duration_sec']]),
                          'best_epoch': (report.get('checkpoint') or {}).get('best_epoch'),
                          'val_accuracy': validation.get('accuracy'), 'macro_f1': validation.get('macro_f1'),

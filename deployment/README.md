@@ -12,3 +12,10 @@ registration, actual ESP-NN dispatch, frontend parity, tensor arena and invocati
 with the target firmware. Raspberry Pi host execution also needs device testing.
 No board firmware, Tensor Arena measurements, latency or energy results are
 claimed by this project. Missing device measurements remain null.
+
+Fixed-crop and sliding-window validation are host evaluation protocols. Exported
+model inputs remain a single fixed-duration window. Full-clip sliding inference
+requires multiple model invocations plus host/application aggregation. This does
+not change the definition of single-window CREST/MCU latency, the profiling schema,
+or introduce deployment window loops. Reported validation seconds include host
+preprocessing/aggregation and must not be interpreted as target-device latency.

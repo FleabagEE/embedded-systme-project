@@ -101,3 +101,28 @@ class ColabTests(unittest.TestCase):
                             matrix = json.loads((Path(tmp)/'sweep.json').read_text())['parameters']
                             self.assertEqual(matrix['model.architecture'],[token])
                             self.assertEqual(matrix['model.pooling'],[pooling])
+
+    def test_validation_controls_reach_single_and_batch_cli(self):
+        from training.utils import load_config
+        sources = self.notebook_sources()
+        controls = next(s for s in sources if s.startswith('#@title Experiment controls'))
+        launch = next(s for s in sources if s.startswith('#@title Train through the repository CLI'))
+        self.assertEqual(load_config()['validation']['method'],'sliding_window')
+        for method,aggregation in (('fixed','mean_probability'),('sliding_window','mean_probability'),('sliding_window','max_probability')):
+            for mode in ('single','batch'):
+                with self.subTest(method=method,aggregation=aggregation,mode=mode), tempfile.TemporaryDirectory() as tmp:
+                    source = controls.replace("validation_method = 'sliding_window'",f'validation_method = {method!r}')
+                    source = source.replace("validation_stride = 0.5",'validation_stride = 0.25')
+                    source = source.replace("validation_aggregation = 'mean_probability'",f'validation_aggregation = {aggregation!r}')
+                    run = Mock(return_value=SimpleNamespace(returncode=0))
+                    ns={'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models'}
+                    exec(source,ns)
+                    ns.update(experiment_mode=mode,augmentation_overrides={'augmentation.enabled':True},TRAINING_PYTHON='python',
+                              REPO_DIR=tmp,TRAIN_ENV={},subprocess=SimpleNamespace(run=run),Path=lambda *_:Path(tmp)/'sweep.json',print=lambda *a:None)
+                    exec(launch,ns)
+                    command = run.call_args.args[0]
+                    overrides = [command[i+1] for i,v in enumerate(command) if v=='--set']
+                    settings = load_config('config.yaml',overrides)['validation']
+                    self.assertEqual(settings['method'],method)
+                    self.assertEqual(settings['stride_seconds'],.25)
+                    self.assertEqual(settings['aggregation'],aggregation)
