@@ -34,6 +34,7 @@ def build_model(config, width=None, time_frames=None):
     if width == 'all':
         raise ValueError('Use SharedMobileNetV2 for width=all')
     ratio = m.get('expansion_ratio', 3)
+    spatial = 'depthwise' if m.get('mobile_spatial_conv', 'DW') == 'DW' else 'spatial'
     inputs = tf.keras.Input((time_frames, config['audio']['n_mels'], 1),
                             batch_size=1 if time_frames is not None else None, name='log_mel')
     count = channels([m.get('stem_channels',16)], width)[0]
@@ -49,10 +50,14 @@ def build_model(config, width=None, time_frames=None):
         x = tf.keras.layers.Conv2D(expanded, 1, use_bias=False, kernel_initializer='he_normal', name=prefix+'_expand')(x)
         x = tf.keras.layers.BatchNormalization(name=prefix+'_expand_bn', **bn_parameters(config))(x)
         x = tf.keras.layers.ReLU(max_value=6, name=prefix+'_expand_relu6')(x)
-        x = tf.keras.layers.DepthwiseConv2D(3, strides=stride, padding='same', use_bias=False,
-                                           depthwise_initializer='he_normal', name=prefix+'_depthwise')(x)
-        x = tf.keras.layers.BatchNormalization(name=prefix+'_depthwise_bn', **bn_parameters(config))(x)
-        x = tf.keras.layers.ReLU(max_value=6, name=prefix+'_depthwise_relu6')(x)
+        if spatial == 'depthwise':
+            x = tf.keras.layers.DepthwiseConv2D(3, strides=stride, padding='same', use_bias=False,
+                                               depthwise_initializer='he_normal', name=prefix+'_depthwise')(x)
+        else:
+            x = tf.keras.layers.Conv2D(expanded, 3, strides=stride, padding='same', use_bias=False,
+                                       kernel_initializer='he_normal', name=prefix+'_spatial')(x)
+        x = tf.keras.layers.BatchNormalization(name=prefix+'_'+spatial+'_bn', **bn_parameters(config))(x)
+        x = tf.keras.layers.ReLU(max_value=6, name=prefix+'_'+spatial+'_relu6')(x)
         x = tf.keras.layers.Conv2D(count, 1, use_bias=False, kernel_initializer='he_normal', name=prefix+'_project')(x)
         # Linear projection: BN, no ReLU after the projection.
         x = tf.keras.layers.BatchNormalization(name=prefix+'_project_bn', **bn_parameters(config))(x)
@@ -86,21 +91,32 @@ class SharedInvertedBlock(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.stride = stride
         self.ratio = config['model'].get('expansion_ratio', 3)
+        self.spatial_type = config['model'].get('mobile_spatial_conv', 'DW')
         expanded = input_max * self.ratio
         self.expansion_kernel = self.add_weight('expand_kernel', (1,1,input_max,expanded), initializer='he_normal')
-        self.depthwise_kernel = self.add_weight('depthwise_kernel', (3,3,expanded,1), initializer='he_normal')
+        if self.spatial_type == 'DW':
+            self.depthwise_kernel = self.add_weight('depthwise_kernel', (3,3,expanded,1), initializer='he_normal')
+        else:
+            self.spatial_kernel = self.add_weight('spatial_kernel', (3,3,expanded,expanded), initializer='he_normal')
         self.projection_kernel = self.add_weight('project_kernel', (1,1,expanded,output_max), initializer='he_normal')
         self.expand_bn = SwitchableBatchNorm({w: channels([input_max],w)[0]*self.ratio for w in widths},config,name='expand_bn')
-        self.depthwise_bn = SwitchableBatchNorm({w: channels([input_max],w)[0]*self.ratio for w in widths},config,name='depthwise_bn')
+        spatial_name = 'depthwise_bn' if self.spatial_type == 'DW' else 'spatial_bn'
+        setattr(self, spatial_name, SwitchableBatchNorm(
+            {w: channels([input_max],w)[0]*self.ratio for w in widths},config,name=spatial_name))
         self.project_bn = SwitchableBatchNorm({w: channels([output_max],w)[0] for w in widths},config,name='project_bn')
 
     def call(self, inputs, width, count, training=False):
         n_in = int(inputs.shape[-1]); expanded = n_in * self.ratio
         x = tf.nn.conv2d(inputs, self.expansion_kernel[:,:,:n_in,:expanded], strides=1, padding='SAME')
         x = tf.nn.relu6(self.expand_bn(x, width=width, training=training))
-        x = tf.nn.depthwise_conv2d(x, self.depthwise_kernel[:,:,:expanded,:],
-                                  strides=[1,self.stride,self.stride,1], padding='SAME')
-        x = tf.nn.relu6(self.depthwise_bn(x, width=width, training=training))
+        if self.spatial_type == 'DW':
+            x = tf.nn.depthwise_conv2d(x, self.depthwise_kernel[:,:,:expanded,:],
+                                      strides=[1,self.stride,self.stride,1], padding='SAME')
+            x = tf.nn.relu6(self.depthwise_bn(x, width=width, training=training))
+        else:
+            x = tf.nn.conv2d(x, self.spatial_kernel[:,:,:expanded,:expanded],
+                             strides=[1,self.stride,self.stride,1], padding='SAME')
+            x = tf.nn.relu6(self.spatial_bn(x, width=width, training=training))
         x = tf.nn.conv2d(x, self.projection_kernel[:,:,:expanded,:count], strides=1, padding='SAME')
         x = self.project_bn(x, width=width, training=training)
         return inputs + x if self.stride == 1 and n_in == count else x
@@ -145,9 +161,14 @@ class SharedMobileNetV2(tf.keras.Model):
             output = channels([maximum],width)[0]
             prefix = f'block_{index}'
             model.get_layer(prefix+'_expand').set_weights([block.expansion_kernel.numpy()[:,:,:count,:expanded]])
-            model.get_layer(prefix+'_depthwise').set_weights([block.depthwise_kernel.numpy()[:,:,:expanded,:]])
+            if block.spatial_type == 'DW':
+                model.get_layer(prefix+'_depthwise').set_weights([block.depthwise_kernel.numpy()[:,:,:expanded,:]])
+                spatial_bn_name, spatial_bn = 'depthwise_bn', block.depthwise_bn
+            else:
+                model.get_layer(prefix+'_spatial').set_weights([block.spatial_kernel.numpy()[:,:,:expanded,:expanded]])
+                spatial_bn_name, spatial_bn = 'spatial_bn', block.spatial_bn
             model.get_layer(prefix+'_project').set_weights([block.projection_kernel.numpy()[:,:,:expanded,:output]])
-            for suffix,state in [('expand_bn',block.expand_bn),('depthwise_bn',block.depthwise_bn),('project_bn',block.project_bn)]:
+            for suffix,state in [('expand_bn',block.expand_bn),(spatial_bn_name,spatial_bn),('project_bn',block.project_bn)]:
                 model.get_layer(prefix+'_'+suffix).set_weights(state.states[width].get_weights())
             count = output
         kernel = classifier_prefix(self.classifier_kernel,count,block_specs(self.config_spec)[-1][1],m.get('pooling','avg'))
@@ -166,7 +187,8 @@ def architecture_metadata(model, config, width, duration):
         macs += frames*mels*previous*expanded
         frames,mels = math.ceil(frames/stride),math.ceil(mels/stride)
         count = channels([output_max],width)[0]
-        macs += frames*mels*(9*expanded + expanded*count)
+        spatial_macs = 9*expanded*(expanded if m.get('mobile_spatial_conv','DW') == 'SC' else 1)
+        macs += frames*mels*(spatial_macs + expanded*count)
         blocks.append({'shape':[frames,mels,count], 'expanded_channels':expanded,
                        'stride':stride,'residual':stride==1 and previous==count})
         previous = count
@@ -174,6 +196,7 @@ def architecture_metadata(model, config, width, duration):
     return {'num_parameters':model.count_params(),'estimated_macs':macs,
             'macs_method':'Analytical conv/depthwise/dense MACs; excludes BN/ReLU6/add/pooling/softmax/frontend; not a device measurement.',
             'duration_sec':duration,'input_shape':[1,*shape],'output_shape':[1,m['num_classes']],
-            'pooling':m.get('pooling','avg'),'blocks':blocks,'tensor_arena_bytes':None,
+            'pooling':m.get('pooling','avg'),'spatial_conv_type':m.get('mobile_spatial_conv','DW'),
+            'blocks':blocks,'tensor_arena_bytes':None,
             'device_latency_ms':None,'energy_mj':None,'batch_norm':True,
             'weight_float32_bytes':sum(int(np.prod(v.shape))*4 for v in model.weights)}

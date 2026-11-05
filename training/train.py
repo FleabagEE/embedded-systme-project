@@ -22,6 +22,7 @@ def parser():
     result.add_argument('--config', default='config.yaml')
     result.add_argument('--set', action='append', default=[], metavar='KEY=VALUE')
     result.add_argument('--run-id', help='Optional human label; experiment directories still use unique sequence numbers')
+    result.add_argument('--sequence-start', type=int, help='Allocate globally across architectures, at or above this number')
     result.add_argument('--skip-completed', action='store_true', help='Skip a matching completed experiment with verified artifacts')
     result.add_argument('--dry-run', '--smoke-test', dest='dry_run', action='store_true',
                         help='One synthetic waveform epoch plus actual exports; never empirical accuracy')
@@ -80,7 +81,7 @@ def validate_epoch(model, dataset, config, widths, classes, synthetic, validatio
     return row
 
 
-def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, skip_completed=False):
+def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, skip_completed=False, sequence_start=None):
     from training.registry import create_run, find_completed, experiment_key, write_summary
     config = copy.deepcopy(config)
     config['audio']['duration_sec'] = training_durations(config)[0]
@@ -92,7 +93,7 @@ def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, sk
     if skip_completed and (completed := find_completed(config, dry_run, limit)):
         print(f'Skipped completed experiment: {completed}', flush=True)
         return completed
-    run = create_run(config, run_id)
+    run = create_run(config, run_id, sequence_start=sequence_start)
     source = 'synthetic_smoke_only' if dry_run else 'UrbanSound8K'
     from training.models import model_metadata
     update_report(run, model=model_metadata(config), configuration_hash=experiment_key(config, dry_run, limit), seed=config['training']['seed'],
@@ -294,7 +295,7 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
 def main():
     args = parser().parse_args()
     train(load_config(args.config, args.set), dry_run=args.dry_run, limit=args.limit,
-          run_id=args.run_id, skip_int8=args.skip_int8, skip_completed=args.skip_completed)
+          run_id=args.run_id, skip_int8=args.skip_int8, skip_completed=args.skip_completed, sequence_start=args.sequence_start)
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ class ShapeTests(unittest.TestCase):
     def test_same_weights_accept_both_temporal_lengths(self):
         c = config()
         for conv in ('SC', 'DW'):
-            for mels in (40, 64):
+            for mels in (40, 64, 128):
                 c['model']['conv_type'], c['audio']['n_mels'] = conv, mels
                 for width in ('1', '5', '25'):
                     model = build_model(c, width)

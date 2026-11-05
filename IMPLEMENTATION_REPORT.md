@@ -39,6 +39,28 @@ latency and physical board execution remain unverified.
 
 Verification commands:
 
+The seven-baseline queue adds an ordered preset file and one Colab controller
+cell. Its defaults match the supplied baseline screenshot: max pooling, mixed
+1/2-second training, all widths, fixed validation, seed 42, 50 epochs and batch
+size 64. Three DS-CNN and four MobileNet presets pair Mel 64/128 with frequency
+mask maxima 4/8. `model.mobile_spatial_conv=SC` explicitly replaces the MobileNet
+3x3 depthwise layer with a standard 3x3 convolution as an ablation; the default and
+missing-key behavior remain DW for old models. Shared prefix slicing, switchable
+BN, subnet extraction, analytical MACs and export handle both variants.
+
+`--sequence-start 7` enables global numbering across architectures, with locking
+and durable reservations; normal runs retain per-architecture numbering. Ordered
+sweeps reuse the existing CLI, preview without allocating IDs, finalize each run
+incrementally, continue experiment failures and skip verified completed runs.
+The queue defaults to preview; enable run_baseline_queue to start training.
+
+Verification for this addition: 69 tests passed in tinyml-tf, covering 128-Mel
+features, SC/DW regression, MobileNet-SC shared gradients/freeze/serialization,
+actual 128-Mel CPU training and FP32/INT8 export/invocation, concurrent global
+allocation, ordered failure/skip behavior, and Colab preview/launch controls.
+These are small diagnostic runs, not seven complete 50-epoch experiments or
+evidence of accuracy improvement. CUDA and physical MCU deployment remain untested.
+
 Sliding-window validation extension: the canonical config and Colab now default
 to deterministic full-clip sliding windows, stride 0.5 seconds and mean probability
 aggregation. Fixed mode keeps the existing crop positions, padding and aggregation;

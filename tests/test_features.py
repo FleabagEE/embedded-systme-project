@@ -8,7 +8,7 @@ class FeatureTests(unittest.TestCase):
     def test_shapes_and_finite_reproducible_silence(self):
         c = config()
         for duration in (1, 1.5, 2):
-            for mels in (40, 64):
+            for mels in (40, 64, 128):
                 c['audio'].update(duration_sec=duration, n_mels=mels)
                 y = np.zeros(round(16000 * duration), np.float32)
                 out = log_mel(y, c['audio'])

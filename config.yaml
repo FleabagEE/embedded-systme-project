@@ -32,6 +32,7 @@ augmentation:
     TimeMask: {enabled: true, probability: 0.5, max_frames: 10, reference_frames: 100}
 model:
   architecture: dscnn
+  mobile_spatial_conv: DW # MobileNet only: DW (original) or SC (3x3 ablation).
   pooling: avg
   width_options: ['1', '5', '25']
   stem_channels: 16

@@ -61,7 +61,8 @@ def width_token(value):
 
 def canonical_name(config, width=None):
     if config['model'].get('architecture', 'dscnn') == 'mobilenetv2':
-        return f"MobileNetV2Tiny_{config['audio']['n_mels']}_{width_token(config['model']['width'] if width is None else width)}"
+        variant = '_SC' if config['model'].get('mobile_spatial_conv', 'DW') == 'SC' else ''
+        return f"MobileNetV2Tiny_{config['audio']['n_mels']}{variant}_{width_token(config['model']['width'] if width is None else width)}"
     return f"DSCNN_{config['audio']['n_mels']}_{config['model']['conv_type']}_{width_token(config['model']['width'] if width is None else width)}"
 
 
@@ -122,8 +123,8 @@ def validate_config(c, *, training=True):
         raise ValueError(f'Configuration needs mappings for: {", ".join(sections)}')
     a, m, t, q = (c[k] for k in ('audio', 'model', 'training', 'quantization'))
     m['width'] = width_token(m['width'])
-    if a['sample_rate'] != 16000 or a['duration_sec'] not in SUPPORTED_DURATIONS or a['n_mels'] not in (40, 64):
-        raise ValueError('Use 16000 Hz, duration_sec 1/1.5/2, and n_mels 40/64')
+    if a['sample_rate'] != 16000 or a['duration_sec'] not in SUPPORTED_DURATIONS or a['n_mels'] not in (40, 64, 128):
+        raise ValueError('Use 16000 Hz, duration_sec 1/1.5/2, and n_mels 40/64/128')
     if m['conv_type'] not in ('SC', 'DW') or not m['global_average_pooling'] or m.get('pooling', 'avg') not in ('avg', 'max', 'mix'):
         raise ValueError('Use SC/DW, global pooling, and pooling=avg/max/mix')
     if m['num_blocks'] != len(m['base_channels']) or not m['base_channels'] or any(type(x) is not int or x < 1 for x in m['base_channels']):
@@ -184,6 +185,8 @@ def validate_config(c, *, training=True):
     if aw.get('strategy', 'all') not in ('all', 'sandwich') or type(aw.get('sandwich_random_widths', 1)) is not int or aw.get('sandwich_random_widths', 1) < 0:
         raise ValueError('Invalid shared-width strategy or sandwich_random_widths')
     if m.get('architecture', 'dscnn') == 'mobilenetv2':
+        if m.get('mobile_spatial_conv', 'DW') not in ('SC', 'DW'):
+            raise ValueError('model.mobile_spatial_conv must be SC or DW')
         stages = m.get('stage_channels', [16,24,32,48])
         strides = m.get('stage_strides', [1,2,2,1]); repeats = m.get('stage_repeats', [1,2,2,1])
         if not m.get('standard_stem', True):

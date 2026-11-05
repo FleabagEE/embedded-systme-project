@@ -252,8 +252,16 @@ channels/strides/repeats. Defaults are stem 16, stages `[16,24,32,48]`, strides
 + BN. Residual addition requires stride 1 and equal channels. Global pooling and
 a dense 10-class softmax finish the model. DS-CNN retains its original logits
 output and BN-free layers; loss/evaluation handle the two output conventions.
-`model.conv_type` chooses SC/DW DS-CNN blocks; MobileNet bottlenecks always use
-expansion/depthwise/projection regardless of this DS-CNN setting.
+`model.conv_type` chooses SC/DW DS-CNN blocks. MobileNet uses the independent
+`model.mobile_spatial_conv`: `DW` (default) retains the original inverted residual;
+`SC` is an explicit ablation replacing only the 3×3 depthwise layer with a full
+3×3 standard convolution from expanded channels to expanded channels. The stem,
+expansion/projection, BN/ReLU6, residual rule and width slicing remain unchanged.
+SC has more parameters/MACs and is not the standard MobileNetV2 bottleneck. Reports
+record its actual `spatial_conv_type`; analytical MACs account for the full kernel.
+Missing `mobile_spatial_conv` in historical MobileNet configs always means DW,
+even if their old DS-CNN-only `conv_type` field says SC. Original DW model names
+remain `MobileNetV2Tiny_{mels}_{width}`; the ablation adds `_SC` before width.
 
 For `model.width=all`, the same convolution Variables receive the summed loss
 gradient from every sampled width, with one optimizer update per minibatch.
@@ -294,7 +302,7 @@ then independently uses training-only representative inputs for each duration.
 
 ## Models and experiment reports
 
-Canonical model identity remains `DSCNN_{40|64}_{SC|DW}_{1|5|25|all}`. Width tokens
+Canonical model identity remains `DSCNN_{40|64|128}_{SC|DW}_{1|5|25|all}`. Width tokens
 1/5/25 mean multipliers 1.0/0.5/0.25. Channels use `max(1,floor(base*multiplier))`.
 The standard Conv2D stem, stride-2 blocks, bias/ReLU, BN-free policy, default average pooling and dense
 classifier are retained. Shared models slice the same convolution/classifier
@@ -388,6 +396,69 @@ Global `MEAN`, `REDUCE_MAX` and `CONCATENATION` should be budgeted as reference
 kernels, without assuming ESP-NN acceleration. Physical MCU/operator/arena
 compatibility still needs board-specific validation;
 no firmware, timing/energy or accuracy results are invented.
+
+## Seven-baseline sequential queue
+
+The notebook adds **Seven baseline queue — start at 007**. Run the setup/data and
+Data augmentation config cells, then use this queue cell in place of the ordinary
+single/batch launch cell. It prints a validated plan without training by default.
+Set `run_baseline_queue=True` and run it to launch the seven presets in order.
+`queue_start_sequence=7`, `queue_epochs=50`, `queue_batch_size=64` and
+`queue_skip_completed=True` are editable Colab controls. The queue does not depend
+on the ordinary Experiment controls cell's current model/training choices.
+
+The source of truth is `configs/baseline_queue.yaml`:
+
+| Expected ID* | Architecture | Spatial convolution | Mel bins | FrequencyMask max bins |
+| --- | --- | --- | ---: | ---: |
+| dscnn_007 | DS-CNN | SC | 128 | 8 |
+| dscnn_008 | DS-CNN | DW | 64 | 4 |
+| dscnn_009 | DS-CNN | DW | 128 | 8 |
+| mobilenetv2_010 | MobileNetV2 SC ablation | SC | 64 | 4 |
+| mobilenetv2_011 | MobileNetV2 SC ablation | SC | 128 | 8 |
+| mobilenetv2_012 | MobileNetV2-Tiny | DW | 64 | 4 |
+| mobilenetv2_013 | MobileNetV2-Tiny | DW | 128 | 8 |
+
+Common settings reproduce the supplied baseline: max pooling, standard stem,
+width=all, mixed `[1.0,2.0]` seconds, expansion ratio 3, all shared widths (sandwich
+random width count 1), no BN recalibration, fixed three-crop mean-probability
+validation, seed 42, deterministic runtime, 50 epochs and batch size 64. Both
+FP32/INT8 and both durations are exported. Augmentation and FrequencyMask are
+explicitly enabled; other augmentation parameters inherit the augmentation cell,
+while each preset fixes its own FrequencyMask size. FrequencyMask probability is
+unchanged. `audio.n_mels` and the regular Colab Mel selector now support 128 in
+addition to 40/64.
+
+*IDs above assume no existing reservations at 007 or higher and no skipped
+configurations. `--sequence-start 7` opts into globally increasing numbers across
+architectures, using process locking and durable reservations. It takes the next
+number greater than all allocated IDs, with a minimum of 007; it never renames or
+overwrites existing runs. Failed/deleted runs still consume their IDs. Ordinary
+training without this flag keeps the existing per-architecture numbering.
+
+Each preset starts a fresh training subprocess, finalizes its report/artifacts
+incrementally and updates summary.csv. Experiment-level failures are recorded and
+later presets continue. Rerunning with skip-completed checks configuration/source
+identity and model hashes, skips completed entries, and retries failed entries
+under new IDs. Keyboard interruption stops the queue; no promise is made that a
+Colab runtime will remain alive while unattended. Already finalized Drive outputs
+remain available after runtime loss. The summary cell displays final results and
+paths; host/MCU measurements are not added by the queue.
+
+```sh
+# Validate the complete plan, with no training and no number reservations.
+"$PY" -m training.sweep --space configs/baseline_queue.yaml --preview
+
+# Run the seven exact presets using the existing trainer.
+"$PY" -m training.sweep --space configs/baseline_queue.yaml \
+  --sequence-start 7 --skip-completed
+```
+
+The sweep CLI now accepts either the existing Cartesian `parameters` mapping or an
+ordered `experiments` list with `name` and dotted-key `overrides`. Optional `defaults`
+are applied before CLI overrides, then each entry applies its own overrides. This
+keeps presets paired (for example 128 Mel with mask 8), without accidentally taking
+a Cartesian product. Colab paths stay independent of the preset source file.
 
 ## Google Colab
 

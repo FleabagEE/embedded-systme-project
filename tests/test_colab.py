@@ -126,3 +126,29 @@ class ColabTests(unittest.TestCase):
                     self.assertEqual(settings['method'],method)
                     self.assertEqual(settings['stride_seconds'],.25)
                     self.assertEqual(settings['aggregation'],aggregation)
+
+    def test_baseline_queue_cell_previews_and_launches_existing_sweep_cli(self):
+        source = next(s for s in self.notebook_sources() if s.startswith('#@title Seven baseline queue'))
+        for execute in (False,True):
+            with self.subTest(execute=execute),tempfile.TemporaryDirectory() as tmp:
+                local = source.replace('run_baseline_queue = False',f'run_baseline_queue = {execute}')
+                run = Mock(return_value=SimpleNamespace(returncode=0,stdout='[]'))
+                ns = {'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models',
+                      'augmentation_overrides':{'augmentation.enabled':False,'augmentation.waveform.PitchShift.probability':.3},
+                      'TRAINING_PYTHON':'python','REPO_DIR':tmp,'TRAIN_ENV':{},'subprocess':SimpleNamespace(run=run),'print':lambda *a,**k:None}
+                exec(local,ns)
+                self.assertEqual(run.call_count,2 if execute else 1)
+                preview=run.call_args_list[0].args[0]
+                self.assertIn('--preview',preview)
+                self.assertEqual(preview[preview.index('--space')+1],'configs/baseline_queue.yaml')
+                self.assertEqual(preview[preview.index('--sequence-start')+1],'7')
+                settings=dict(preview[i+1].split('=',1) for i,v in enumerate(preview) if v=='--set')
+                self.assertEqual(json.loads(settings['training.epochs']),50)
+                self.assertEqual(json.loads(settings['training.batch_size']),64)
+                self.assertTrue(json.loads(settings['augmentation.enabled']))
+                self.assertEqual(json.loads(settings['augmentation.waveform.PitchShift.probability']),.3)
+                if execute:
+                    launched=run.call_args_list[1].args[0]
+                    self.assertNotIn('--preview',launched)
+                    self.assertIn('--skip-completed',launched)
+                    self.assertIn('training.sweep',launched)

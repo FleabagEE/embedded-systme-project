@@ -52,38 +52,45 @@ FIELDS = ['run_id', 'canonical_name', 'duration_sec', 'n_mels', 'conv_type', 're
           'diagnostic_subset', 'validation_num_original_files', 'training_duration_secs']
 
 
-def create_run(config, run_id=None):
+def create_run(config, run_id=None, *, sequence_start=None):
     """Durable reservations + atomic mkdir prevent reuse, even after a failed/deleted run."""
-    from training.artifacts import utc_now, update_report
+    from training.artifacts import utc_now, update_report, report_lock
+    if sequence_start is not None and (type(sequence_start) is not int or sequence_start < 1):
+        raise ValueError('sequence_start must be a positive integer')
     architecture = config['model'].get('architecture', 'dscnn').lower()
     if not re.fullmatch(r'[a-z][a-z0-9_-]*', architecture):
         raise ValueError('architecture must be a safe lowercase name')
     root = Path(config['runtime']['output_dir']).expanduser().resolve()
     reservations = root / '.allocations'
     reservations.mkdir(parents=True, exist_ok=True)
-    pattern = re.compile(re.escape(architecture) + r'_(\d+)$')
-    used = [int(match.group(1)) for folder in (root, reservations) for p in folder.iterdir()
-            if (match := pattern.fullmatch(p.name))]
-    sequence = max(used, default=0) + 1
-    while True:
-        name = f'{architecture}_{sequence:03d}'
-        try:
-            (reservations / name).mkdir()
-        except FileExistsError:
-            sequence += 1
-            continue
-        run = root / name
-        try:
-            run.mkdir()
-        except FileExistsError:
-            sequence += 1
-            continue
-        update_report(run, schema_version=4, centralized_artifacts=True, experiment={'id': name, 'sequence': sequence,
-                      'architecture': architecture, 'label': run_id}, config=config,
-                      seed=config['training']['seed'], software_versions=software_versions(),
-                      state={'status': 'allocated', 'created_at': utc_now()},
-                      validation=None, test=None, failure=None, file_hashes={})
-        return run
+    # Serialize scanning/reservation across architectures. Durable mkdir
+    # reservations still protect IDs after failed or deleted experiments.
+    with report_lock(reservations).open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        pattern = re.compile((re.escape(architecture) if sequence_start is None else r'[a-z][a-z0-9_-]*') + r'_(\d+)$')
+        used = [int(match.group(1)) for folder in (root, reservations) for p in folder.iterdir()
+                if (match := pattern.fullmatch(p.name))]
+        sequence = max(max(used, default=0) + 1, sequence_start or 1)
+        while True:
+            name = f'{architecture}_{sequence:03d}'
+            try:
+                (reservations / name).mkdir()
+            except FileExistsError:
+                sequence += 1
+                continue
+            run = root / name
+            try:
+                run.mkdir()
+            except FileExistsError:
+                sequence += 1
+                continue
+            update_report(run, schema_version=4, centralized_artifacts=True, experiment={'id': name, 'sequence': sequence,
+                          'architecture': architecture, 'label': run_id,
+                          'sequence_policy': 'global' if sequence_start is not None else 'architecture'}, config=config,
+                          seed=config['training']['seed'], software_versions=software_versions(),
+                          state={'status': 'allocated', 'created_at': utc_now()},
+                          validation=None, test=None, failure=None, file_hashes={})
+            return run
 
 
 def upsert_registry(output_root, row):
@@ -188,6 +195,8 @@ def write_summary(output_root):
                          'architecture': report['experiment']['architecture'], 'status': state['status'],
                          'seed': config['training']['seed'], 'conv_type': config['model']['conv_type'],
                          'pooling': config['model'].get('pooling', 'avg'),
+                         'spatial_conv_type': config['model'].get('mobile_spatial_conv', 'DW') if report['experiment']['architecture'] == 'mobilenetv2' else config['model']['conv_type'],
+                         'label': report['experiment'].get('label'),
                          'expansion_ratio': config['model'].get('expansion_ratio', 3) if report['experiment']['architecture'] == 'mobilenetv2' else None,
                          'width': config['model']['width'], 'n_mels': config['audio']['n_mels'],
                          'validation_method': (validation.get('protocol') or {}).get('method', config.get('validation', {}).get('method', 'fixed')),

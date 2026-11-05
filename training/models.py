@@ -36,6 +36,7 @@ def model_metadata(config):
     m = config['model']; mobile = is_mobilenet(config)
     return {'architecture':m.get('architecture','dscnn'),'pooling':m.get('pooling','avg'),
             'expansion_ratio':m.get('expansion_ratio',3) if mobile else None,
+            'spatial_conv_type':m.get('mobile_spatial_conv','DW') if mobile else m['conv_type'],
             'width_options':[WIDTHS[w] for w in selected_widths(config)],
             'batch_norm': {'enabled':mobile,'switchable':mobile and m['width']=='all',
                            **(m.get('batch_norm',{'momentum':.9,'epsilon':.001}) if mobile else {})},
