@@ -1,10 +1,60 @@
 import json
 from pathlib import Path
 import re
+import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock
 
 
 class ColabTests(unittest.TestCase):
+    def notebook_sources(self):
+        nb = json.loads(Path('notebooks/colab_training.ipynb').read_text())
+        return [''.join(cell['source']) for cell in nb['cells']]
+
+    def test_augmentation_controls_before_experiments_and_valid_overrides(self):
+        from training.utils import load_config
+        sources = self.notebook_sources()
+        augmentation = next(i for i, text in enumerate(sources) if text.startswith('#@title Data augmentation config'))
+        experiment = next(i for i, text in enumerate(sources) if text.startswith('#@title Experiment controls'))
+        self.assertLess(augmentation, experiment)
+        namespace = {}
+        exec(sources[augmentation], namespace)
+        self.assertEqual(namespace['augmentation_overrides'], {'augmentation.enabled': True})
+        build = namespace['augmentation_cli_overrides']
+        settings = namespace['augmentation_settings']
+        self.assertEqual(build('disabled', True, settings), {'augmentation.enabled': False})
+        settings['spectrogram']['TimeMask'].update(enabled=False, probability=0.3)
+        settings['waveform']['RandomGain']['max_db'] = 3.0
+        overrides = build('custom', True, settings)
+        config = load_config('config.yaml', [f'{key}={json.dumps(value)}' for key, value in overrides.items()])
+        self.assertFalse(config['augmentation']['spectrogram']['TimeMask']['enabled'])
+        self.assertEqual(config['augmentation']['waveform']['RandomGain']['max_db'], 3.0)
+        self.assertFalse(build('custom', False, settings)['augmentation.enabled'])
+
+    def test_single_and_batch_cli_receive_latest_augmentation_settings(self):
+        sources = self.notebook_sources()
+        augmentation = next(text for text in sources if text.startswith('#@title Data augmentation config'))
+        experiment = next(text for text in sources if text.startswith('#@title Experiment controls'))
+        launch = next(text for text in sources if text.startswith('#@title Train through the repository CLI'))
+        for mode in ('single', 'batch'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
+                run = Mock(return_value=SimpleNamespace(returncode=0))
+                namespace = {'json': json, 'DATASET_ROOT': Path(tmp)/'data', 'OUTPUT_ROOT': Path(tmp)/'models'}
+                exec(augmentation, namespace)
+                exec(experiment, namespace)
+                # Updating this cell after Experiment controls must still affect launch.
+                namespace['augmentation_settings']['waveform']['PitchShift']['probability'] = 0.7
+                namespace['augmentation_overrides'] = namespace['augmentation_cli_overrides']('custom', True, namespace['augmentation_settings'])
+                namespace.update(experiment_mode=mode, TRAINING_PYTHON='python', REPO_DIR=tmp, TRAIN_ENV={},
+                                 subprocess=SimpleNamespace(run=run), Path=lambda *_: Path(tmp)/'sweep.json', print=lambda *args: None)
+                exec(launch, namespace)
+                command = run.call_args.args[0]
+                overrides = dict(command[i+1].split('=',1) for i, value in enumerate(command) if value == '--set')
+                self.assertEqual(json.loads(overrides['augmentation.waveform.PitchShift.probability']), 0.7)
+                self.assertEqual(json.loads(overrides['augmentation.enabled']), True)
+                self.assertIn('training.train' if mode == 'single' else 'training.sweep', command)
+
     def test_notebook_valid_python_cli_and_no_credentials(self):
         path = Path('notebooks/colab_training.ipynb')
         nb = json.loads(path.read_text())
