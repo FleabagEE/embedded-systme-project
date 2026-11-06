@@ -1,0 +1,3659 @@
+{
+  "architecture": {
+    "block_output_shapes": [
+      [
+        49,
+        64,
+        32
+      ],
+      [
+        25,
+        32,
+        64
+      ],
+      [
+        13,
+        16,
+        128
+      ],
+      [
+        7,
+        8,
+        128
+      ]
+    ],
+    "block_types": [
+      "SC",
+      "DW",
+      "DW",
+      "DW"
+    ],
+    "channels": [
+      32,
+      64,
+      128,
+      128
+    ],
+    "device_latency_ms": null,
+    "duration_sec": 1.0,
+    "energy_mj": null,
+    "estimated_macs": 5579008,
+    "input_shape": [
+      1,
+      98,
+      128,
+      1
+    ],
+    "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+    "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+    "num_parameters": 30570,
+    "output_shape": [
+      1,
+      10
+    ],
+    "pooling": "max",
+    "tensor_arena_bytes": null,
+    "weight_float32_bytes": 122280
+  },
+  "artifacts": [
+    "subnets/DSCNN_128_DW_1",
+    "subnets/DSCNN_128_DW_5",
+    "subnets/DSCNN_128_DW_25"
+  ],
+  "centralized_artifacts": true,
+  "checkpoint": {
+    "best_epoch": 33,
+    "best_value": 0.6501225490196079,
+    "epochs_executed": 41,
+    "monitor": "val_accuracy",
+    "resume_supported": false,
+    "skip_completed_supported": true,
+    "weight_path": "shared_best.weights.h5"
+  },
+  "config": {
+    "all_width_training": {
+      "loss_weights": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "sandwich_random_widths": 1,
+      "shared_weights": true,
+      "strategy": "all",
+      "width_order": [
+        "1",
+        "5",
+        "25"
+      ]
+    },
+    "audio": {
+      "center": false,
+      "duration_sec": 1.0,
+      "fft_length": 512,
+      "frame_length_ms": 25,
+      "hop_length_ms": 10,
+      "log_offset": 1e-06,
+      "mono": "mean",
+      "n_mels": 128,
+      "normalization": "none",
+      "normalization_mean": 0.0,
+      "normalization_std": 1.0,
+      "padding": "center",
+      "sample_rate": 16000,
+      "spectrum": "power"
+    },
+    "augmentation": {
+      "enabled": true,
+      "spectrogram": {
+        "FrequencyMask": {
+          "enabled": true,
+          "max_bins": 8,
+          "probability": 0.5
+        },
+        "TimeMask": {
+          "enabled": true,
+          "max_frames": 10,
+          "probability": 0.5,
+          "reference_frames": 100
+        }
+      },
+      "waveform": {
+        "AddBackgroundNoise": {
+          "enabled": true,
+          "max_snr_db": 30.0,
+          "min_snr_db": 15.0,
+          "probability": 0.4,
+          "source": "gaussian"
+        },
+        "PitchShift": {
+          "enabled": true,
+          "max_semitones": 1.0,
+          "min_semitones": -1.0,
+          "probability": 0.2
+        },
+        "RandomGain": {
+          "enabled": true,
+          "max_db": 6.0,
+          "min_db": -6.0,
+          "probability": 0.5
+        },
+        "RandomTimeShift": {
+          "enabled": true,
+          "max_seconds": 0.2,
+          "probability": 0.5
+        },
+        "TimeStretch": {
+          "enabled": true,
+          "max_rate": 1.1,
+          "min_rate": 0.9,
+          "probability": 0.2
+        }
+      }
+    },
+    "dataset": {
+      "cache_dir": "/content/urbansound-cache",
+      "root": "/content/datasets/592dd63b898c",
+      "test_folds": [
+        10
+      ],
+      "train_folds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "val_folds": [
+        9
+      ]
+    },
+    "evaluation": {
+      "include_confusion_matrix": false,
+      "num_crops": 3
+    },
+    "model": {
+      "architecture": "dscnn",
+      "base_channels": [
+        32,
+        64,
+        128,
+        128
+      ],
+      "batch_norm": {
+        "epsilon": 0.001,
+        "momentum": 0.9
+      },
+      "conv_type": "DW",
+      "expansion_ratio": 3,
+      "global_average_pooling": true,
+      "kernel_size": 3,
+      "mobile_spatial_conv": "DW",
+      "num_blocks": 4,
+      "num_classes": 10,
+      "pooling": "max",
+      "stage_channels": [
+        16,
+        24,
+        32,
+        48
+      ],
+      "stage_repeats": [
+        1,
+        2,
+        2,
+        1
+      ],
+      "stage_strides": [
+        1,
+        2,
+        2,
+        1
+      ],
+      "standard_stem": true,
+      "stem_channels": 16,
+      "width": "all",
+      "width_options": [
+        "1",
+        "5",
+        "25"
+      ]
+    },
+    "quantization": {
+      "bn_recalibration_samples": 0,
+      "formats": [
+        "fp32",
+        "int8"
+      ],
+      "int8_in_and_out": true,
+      "output_duration_secs": [],
+      "representative_samples": 128
+    },
+    "runtime": {
+      "deterministic": true,
+      "device": "auto",
+      "output_dir": "/content/drive/MyDrive/EmbeddedSystem/models",
+      "work_dir": "/content/urbansound-work"
+    },
+    "training": {
+      "batch_size": 64,
+      "duration_secs": [
+        1.0,
+        2.0
+      ],
+      "early_stopping_patience": 8,
+      "epochs": 80,
+      "eta_min_epochs": 2,
+      "eta_window": 5,
+      "learning_rate": 0.001,
+      "lr_factor": 0.5,
+      "lr_patience": 3,
+      "min_learning_rate": 1e-05,
+      "monitor": "val_accuracy",
+      "optimizer": "adam",
+      "seed": 42
+    },
+    "validation": {
+      "aggregation": "mean_probability",
+      "batch_size": 32,
+      "cache_features": true,
+      "include_last_window": true,
+      "method": "fixed",
+      "short_clip_padding": "zero",
+      "stride_seconds": 0.5
+    }
+  },
+  "configuration_hash": "0e79e3a517966c7c35824e612f6c33bcf957c6d4f07628db103ca540f27b44d5",
+  "data_source": "UrbanSound8K",
+  "dataset_manifest": {
+    "class_mapping": {
+      "0": "air_conditioner",
+      "1": "car_horn",
+      "2": "children_playing",
+      "3": "dog_bark",
+      "4": "drilling",
+      "5": "engine_idling",
+      "6": "gun_shot",
+      "7": "jackhammer",
+      "8": "siren",
+      "9": "street_music"
+    },
+    "diagnostic_subset": false,
+    "metadata_path": "/content/datasets/592dd63b898c/metadata/UrbanSound8K.csv",
+    "metadata_sha256": "b207f7a53f9e5eb02a5dd71d58fb8b66c88c24c0637b926dc72d9d400a6a2354",
+    "split_counts_used": {
+      "train": 7079,
+      "val": 816
+    }
+  },
+  "experiment": {
+    "architecture": "dscnn",
+    "id": "dscnn_009",
+    "label": "dscnn_dw_mel128_fmask8_18388f8be2e74cddac5ef077ad41905a",
+    "preset": "dscnn_dw_mel128_fmask8",
+    "sequence": 9,
+    "sequence_policy": "global"
+  },
+  "failure": null,
+  "file_hashes": {
+    "shared_best.weights.h5": "d378b00979a9299c6431e8cc6f8489ccc065f0e13d344cd06b29aca9d7b0a24d"
+  },
+  "first_training_batch": {
+    "batch_size": 64,
+    "data_source": "UrbanSound8K",
+    "logits_devices": {
+      "1": "/job:localhost/replica:0/task:0/device:GPU:0",
+      "25": "/job:localhost/replica:0/task:0/device:GPU:0",
+      "5": "/job:localhost/replica:0/task:0/device:GPU:0"
+    },
+    "selected_device": "/GPU:0"
+  },
+  "model": {
+    "architecture": "dscnn",
+    "batch_norm": {
+      "enabled": false,
+      "switchable": false
+    },
+    "expansion_ratio": null,
+    "output": "logits",
+    "pooling": "max",
+    "spatial_conv_type": "DW",
+    "width_options": [
+      1.0,
+      0.5,
+      0.25
+    ]
+  },
+  "schema_version": 4,
+  "seed": 42,
+  "software_versions": {
+    "PyYAML": "6.0.3",
+    "executable": "/content/urbansound-tf215/bin/python",
+    "git_commit": "bb225fc9726606de9aec4ec036d797e60701ea9d",
+    "git_dirty": false,
+    "keras": "2.15.0",
+    "librosa": "0.11.0",
+    "numba": "0.68.1",
+    "numpy": "1.26.4",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "python": "3.11.17 (main, Oct 14 2026, 01:05:33) [Clang 23.1.3 ]",
+    "requirements_lock_sha256": "8c92e33a42db99d6304bf9c29cd913e58b4df4df2fb852a28e82ab2b9343d2cb",
+    "runtime": {
+      "backend": "CUDA",
+      "deterministic_requested": true,
+      "framework": "TensorFlow/Keras",
+      "gpu_execution_verified": true,
+      "physical_gpus": [
+        "/physical_device:GPU:0"
+      ],
+      "reason": "CUDA GPU detected",
+      "requested_device": "auto",
+      "selected_device": "/GPU:0",
+      "training_probe": {
+        "determinism_scope": "One fixed minibatch repeated before updating weights; not a full-run reproducibility guarantee.",
+        "deterministic_requested": true,
+        "gpu_execution_verified": true,
+        "gradient_devices": [
+          "/job:localhost/replica:0/task:0/device:GPU:0"
+        ],
+        "logits_devices": {
+          "1": "/job:localhost/replica:0/task:0/device:GPU:0",
+          "25": "/job:localhost/replica:0/task:0/device:GPU:0",
+          "5": "/job:localhost/replica:0/task:0/device:GPU:0"
+        },
+        "loss": 6.916334629058838,
+        "optimizer_iterations": 1,
+        "post_step_weight_sha256": "7524cc22b73c3daa73f717934c1eb9af7e692d30cfe160805b90dea0385d31b5",
+        "repeated_forward_and_gradients_bitwise_equal": true,
+        "selected_device": "/GPU:0",
+        "variable_devices": [
+          "/job:localhost/replica:0/task:0/device:GPU:0"
+        ],
+        "weights_changed": true
+      }
+    },
+    "scikit-learn": "1.9.1",
+    "scipy": "1.17.1",
+    "soundfile": "0.14.0",
+    "source_sha256": "ba295d584e122c931a2c7446a0ba998329d3bcf40916191e549c3f4ef86c836c",
+    "soxr": "1.1.0",
+    "tensorflow": "2.15.1"
+  },
+  "state": {
+    "created_at": "2026-11-05T10:06:54.599343+00:00",
+    "data_source": "UrbanSound8K",
+    "epochs_executed": 41,
+    "finished_at": "2026-11-05T10:50:43.778217+00:00",
+    "held_out_test_evaluated": false,
+    "int8_exported": true,
+    "started_at": "2026-11-05T10:06:54.648604+00:00",
+    "status": "complete"
+  },
+  "subnets": {
+    "subnets/DSCNN_128_DW_1": {
+      "architecture": {
+        "block_output_shapes": [
+          [
+            49,
+            64,
+            32
+          ],
+          [
+            25,
+            32,
+            64
+          ],
+          [
+            13,
+            16,
+            128
+          ],
+          [
+            7,
+            8,
+            128
+          ]
+        ],
+        "block_types": [
+          "SC",
+          "DW",
+          "DW",
+          "DW"
+        ],
+        "channels": [
+          32,
+          64,
+          128,
+          128
+        ],
+        "device_latency_ms": null,
+        "duration_sec": 1.0,
+        "energy_mj": null,
+        "estimated_macs": 5579008,
+        "input_shape": [
+          1,
+          98,
+          128,
+          1
+        ],
+        "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+        "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+        "num_parameters": 30570,
+        "output_shape": [
+          1,
+          10
+        ],
+        "pooling": "max",
+        "tensor_arena_bytes": null,
+        "weight_float32_bytes": 122280
+      },
+      "bn_recalibration": {
+        "applied": false,
+        "reason": "disabled",
+        "samples": 0
+      },
+      "calibration": {
+        "1s": {
+          "representative": {
+            "audio": {
+              "center": false,
+              "duration_sec": 1.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "augmentation": false,
+            "file_ids_sha256": "7499cb5c6ef22b274b73cfdfc0f6f7c1d28018f223c482019e6888da2e9e557f",
+            "folds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "normalization": "none",
+            "num_samples": 128,
+            "seed": 42,
+            "split": "train"
+          }
+        },
+        "2s": {
+          "representative": {
+            "audio": {
+              "center": false,
+              "duration_sec": 2.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "augmentation": false,
+            "file_ids_sha256": "7499cb5c6ef22b274b73cfdfc0f6f7c1d28018f223c482019e6888da2e9e557f",
+            "folds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "normalization": "none",
+            "num_samples": 128,
+            "seed": 42,
+            "split": "train"
+          }
+        }
+      },
+      "deployment": {
+        "device_measurements": null,
+        "note": "Static built-in operators audited at export; target firmware registration, optimized kernels and arena require device validation.",
+        "status": "host_validated_only",
+        "tensor_arena_bytes": null
+      },
+      "evaluation": {
+        "1s": {
+          "val": {
+            "comparison": {
+              "int8_minus_fp32_accuracy": -0.002450980392156965
+            },
+            "fp32_tflite": {
+              "accuracy": 0.7034313725490197,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.8901776560160215,
+              "macro_f1": 0.7165088552119288,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "frozen_subnet_fp32": {
+              "accuracy": 0.7034313725490197,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.49850853298266884,
+              "macro_f1": 0.7165088552119288,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "int8_tflite": {
+              "accuracy": 0.7009803921568627,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 1.4955777799877978,
+              "macro_f1": 0.7159079725688134,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "keras_fp32": {
+              "accuracy": 0.7034313725490197,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.49850853298266884,
+              "macro_f1": 0.7165088552119288,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "shared_supernet_fp32": {
+              "accuracy": 0.7034313725490197,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.6039096440108551,
+              "macro_f1": 0.7165088552119288,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            }
+          }
+        },
+        "2s": {
+          "val": {
+            "comparison": {
+              "int8_minus_fp32_accuracy": -0.007352941176470562
+            },
+            "fp32_tflite": {
+              "accuracy": 0.7144607843137255,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 1.616899372991611,
+              "macro_f1": 0.7247566890616352,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "frozen_subnet_fp32": {
+              "accuracy": 0.7144607843137255,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.5312981109964312,
+              "macro_f1": 0.7247566890616352,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "int8_tflite": {
+              "accuracy": 0.7071078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 2.6593908070135512,
+              "macro_f1": 0.7196368901439018,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "keras_fp32": {
+              "accuracy": 0.7144607843137255,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.5312981109964312,
+              "macro_f1": 0.7247566890616352,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "shared_supernet_fp32": {
+              "accuracy": 0.7144607843137255,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.535226046009484,
+              "macro_f1": 0.7247566890616352,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            }
+          }
+        }
+      },
+      "evaluation_context": {
+        "1s": {
+          "val": {
+            "aggregation": "Average softmax probabilities across deterministic crops of each original file, then take argmax; one center crop when num_crops=1.",
+            "audio": {
+              "center": false,
+              "duration_sec": 1.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "class_mapping": {
+              "0": "air_conditioner",
+              "1": "car_horn",
+              "2": "children_playing",
+              "3": "dog_bark",
+              "4": "drilling",
+              "5": "engine_idling",
+              "6": "gun_shot",
+              "7": "jackhammer",
+              "8": "siren",
+              "9": "street_music"
+            },
+            "duration_seen_during_training": true,
+            "effective_width": "1",
+            "evaluation_duration_sec": 1.0,
+            "evaluation_num_crops": 3,
+            "folds": [
+              9
+            ],
+            "run_id": "dscnn_009",
+            "runtime": {
+              "elapsed_seconds": 6.729583072999958,
+              "inference_seconds": 3.4881736129973433,
+              "num_clips": 816,
+              "num_window_predictions": 9504,
+              "num_windows": 2376,
+              "preprocessing_seconds": 3.118505827998888
+            },
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ],
+            "validation_protocol": {
+              "aggregation": "mean_probability",
+              "method": "fixed",
+              "num_crops": 3
+            }
+          }
+        },
+        "2s": {
+          "val": {
+            "aggregation": "Average softmax probabilities across deterministic crops of each original file, then take argmax; one center crop when num_crops=1.",
+            "audio": {
+              "center": false,
+              "duration_sec": 2.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "class_mapping": {
+              "0": "air_conditioner",
+              "1": "car_horn",
+              "2": "children_playing",
+              "3": "dog_bark",
+              "4": "drilling",
+              "5": "engine_idling",
+              "6": "gun_shot",
+              "7": "jackhammer",
+              "8": "siren",
+              "9": "street_music"
+            },
+            "duration_seen_during_training": true,
+            "effective_width": "1",
+            "evaluation_duration_sec": 2.0,
+            "evaluation_num_crops": 3,
+            "folds": [
+              9
+            ],
+            "run_id": "dscnn_009",
+            "runtime": {
+              "elapsed_seconds": 9.86149096400186,
+              "inference_seconds": 5.342814337011077,
+              "num_clips": 816,
+              "num_window_predictions": 9144,
+              "num_windows": 2286,
+              "preprocessing_seconds": 4.432394243012823
+            },
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ],
+            "validation_protocol": {
+              "aggregation": "mean_probability",
+              "method": "fixed",
+              "num_crops": 3
+            }
+          }
+        }
+      },
+      "exports": {
+        "1s": {
+          "fp32": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  49,
+                  64,
+                  32
+                ],
+                [
+                  25,
+                  32,
+                  64
+                ],
+                [
+                  13,
+                  16,
+                  128
+                ],
+                [
+                  7,
+                  8,
+                  128
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                32,
+                64,
+                128,
+                128
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 1.0,
+              "energy_mj": null,
+              "estimated_macs": 5579008,
+              "input_shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 30570,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 122280
+            },
+            "byte_size": 127812,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "1",
+            "export_duration_sec": 1.0,
+            "filename": "exports/1s/fp32.tflite",
+            "frozen_weight_sha256": "82685fe5766ceba184e87f283e6ccb8dbdd363d5977c740f6b52357a80644dce",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "zero_point": 0
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 0
+            },
+            "run_id": "dscnn_009",
+            "sha256": "6b2627b20dad0f0dd2c74d33322b1664568b723a5774e6ee499308e377babff7",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          },
+          "int8": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  49,
+                  64,
+                  32
+                ],
+                [
+                  25,
+                  32,
+                  64
+                ],
+                [
+                  13,
+                  16,
+                  128
+                ],
+                [
+                  7,
+                  8,
+                  128
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                32,
+                64,
+                128,
+                128
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 1.0,
+              "energy_mj": null,
+              "estimated_macs": 5579008,
+              "input_shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 30570,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 122280
+            },
+            "byte_size": 51800,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "1",
+            "export_duration_sec": 1.0,
+            "filename": "exports/1s/int8.tflite",
+            "frozen_weight_sha256": "82685fe5766ceba184e87f283e6ccb8dbdd363d5977c740f6b52357a80644dce",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "int8",
+              "scale": 0.0785151794552803,
+              "shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "zero_point": 48
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [
+                {
+                  "matching_int8_quantization": true,
+                  "operator": "REDUCE_MAX"
+                }
+              ],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "int8",
+              "scale": 0.20454305410385132,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 19
+            },
+            "run_id": "dscnn_009",
+            "sha256": "d57d1c093f4451bd64ffd47e398556e491cdc5b21166348e334a19b2029dbbcf",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          }
+        },
+        "2s": {
+          "fp32": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  99,
+                  64,
+                  32
+                ],
+                [
+                  50,
+                  32,
+                  64
+                ],
+                [
+                  25,
+                  16,
+                  128
+                ],
+                [
+                  13,
+                  8,
+                  128
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                32,
+                64,
+                128,
+                128
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 2.0,
+              "energy_mj": null,
+              "estimated_macs": 10894592,
+              "input_shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 30570,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 122280
+            },
+            "byte_size": 127812,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "1",
+            "export_duration_sec": 2.0,
+            "filename": "exports/2s/fp32.tflite",
+            "frozen_weight_sha256": "82685fe5766ceba184e87f283e6ccb8dbdd363d5977c740f6b52357a80644dce",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "zero_point": 0
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 0
+            },
+            "run_id": "dscnn_009",
+            "sha256": "539ca7c3c7854f79eecd86a1784d0788c1171793f53d0b3242cf47e7f060de8d",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          },
+          "int8": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  99,
+                  64,
+                  32
+                ],
+                [
+                  50,
+                  32,
+                  64
+                ],
+                [
+                  25,
+                  16,
+                  128
+                ],
+                [
+                  13,
+                  8,
+                  128
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                32,
+                64,
+                128,
+                128
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 2.0,
+              "energy_mj": null,
+              "estimated_macs": 10894592,
+              "input_shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 30570,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 122280
+            },
+            "byte_size": 51800,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "1",
+            "export_duration_sec": 2.0,
+            "filename": "exports/2s/int8.tflite",
+            "frozen_weight_sha256": "82685fe5766ceba184e87f283e6ccb8dbdd363d5977c740f6b52357a80644dce",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "int8",
+              "scale": 0.0785151794552803,
+              "shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "zero_point": 48
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [
+                {
+                  "matching_int8_quantization": true,
+                  "operator": "REDUCE_MAX"
+                }
+              ],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "int8",
+              "scale": 0.21143336594104767,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 18
+            },
+            "run_id": "dscnn_009",
+            "sha256": "b9d246545e16b7d1b292c8f7f2a49c0904aa061fe5020808d2863fea190ee1be",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          }
+        }
+      },
+      "file_hashes": {
+        "best.keras": "9a9e69e32545d9455639f9ad873eb9cf0d392c0c64ab7dcf3c4e58b8eee31d0a",
+        "exports/1s/fp32.tflite": "6b2627b20dad0f0dd2c74d33322b1664568b723a5774e6ee499308e377babff7",
+        "exports/1s/int8.tflite": "d57d1c093f4451bd64ffd47e398556e491cdc5b21166348e334a19b2029dbbcf",
+        "exports/2s/fp32.tflite": "539ca7c3c7854f79eecd86a1784d0788c1171793f53d0b3242cf47e7f060de8d",
+        "exports/2s/int8.tflite": "b9d246545e16b7d1b292c8f7f2a49c0904aa061fe5020808d2863fea190ee1be"
+      },
+      "metadata": {
+        "canonical_name": "DSCNN_128_DW_1",
+        "class_mapping": {
+          "0": "air_conditioner",
+          "1": "car_horn",
+          "2": "children_playing",
+          "3": "dog_bark",
+          "4": "drilling",
+          "5": "engine_idling",
+          "6": "gun_shot",
+          "7": "jackhammer",
+          "8": "siren",
+          "9": "street_music"
+        },
+        "data_source": "UrbanSound8K",
+        "dataset_limit": null,
+        "diagnostic_subset": false,
+        "effective_width": "1",
+        "equivalence_checked_before_bn_recalibration": true,
+        "frozen_supernet_max_abs_error": 0.0,
+        "parent_run_path": "/content/drive/MyDrive/EmbeddedSystem/models/dscnn_009",
+        "registry_root": "/content/drive/MyDrive/EmbeddedSystem/models",
+        "requested_width": "all",
+        "run_id": "dscnn_009",
+        "synthetic_count": 12,
+        "trained_duration_sec": 1.0,
+        "trained_parent": "DSCNN_128_DW_all",
+        "training_duration_secs": [
+          1.0,
+          2.0
+        ]
+      },
+      "schema_version": 4,
+      "state": {
+        "data_source": "UrbanSound8K",
+        "int8_exported": true,
+        "status": "complete"
+      },
+      "updated_at": "2026-11-05T10:50:01.512840+00:00"
+    },
+    "subnets/DSCNN_128_DW_25": {
+      "architecture": {
+        "block_output_shapes": [
+          [
+            49,
+            64,
+            8
+          ],
+          [
+            25,
+            32,
+            16
+          ],
+          [
+            13,
+            16,
+            32
+          ],
+          [
+            7,
+            8,
+            32
+          ]
+        ],
+        "block_types": [
+          "SC",
+          "DW",
+          "DW",
+          "DW"
+        ],
+        "channels": [
+          8,
+          16,
+          32,
+          32
+        ],
+        "device_latency_ms": null,
+        "duration_sec": 1.0,
+        "energy_mj": null,
+        "estimated_macs": 596032,
+        "input_shape": [
+          1,
+          98,
+          128,
+          1
+        ],
+        "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+        "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+        "num_parameters": 2658,
+        "output_shape": [
+          1,
+          10
+        ],
+        "pooling": "max",
+        "tensor_arena_bytes": null,
+        "weight_float32_bytes": 10632
+      },
+      "bn_recalibration": {
+        "applied": false,
+        "reason": "disabled",
+        "samples": 0
+      },
+      "calibration": {
+        "1s": {
+          "representative": {
+            "audio": {
+              "center": false,
+              "duration_sec": 1.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "augmentation": false,
+            "file_ids_sha256": "7499cb5c6ef22b274b73cfdfc0f6f7c1d28018f223c482019e6888da2e9e557f",
+            "folds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "normalization": "none",
+            "num_samples": 128,
+            "seed": 42,
+            "split": "train"
+          }
+        },
+        "2s": {
+          "representative": {
+            "audio": {
+              "center": false,
+              "duration_sec": 2.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "augmentation": false,
+            "file_ids_sha256": "7499cb5c6ef22b274b73cfdfc0f6f7c1d28018f223c482019e6888da2e9e557f",
+            "folds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "normalization": "none",
+            "num_samples": 128,
+            "seed": 42,
+            "split": "train"
+          }
+        }
+      },
+      "deployment": {
+        "device_measurements": null,
+        "note": "Static built-in operators audited at export; target firmware registration, optimized kernels and arena require device validation.",
+        "status": "host_validated_only",
+        "tensor_arena_bytes": null
+      },
+      "evaluation": {
+        "1s": {
+          "val": {
+            "comparison": {
+              "int8_minus_fp32_accuracy": -0.013480392156862697
+            },
+            "fp32_tflite": {
+              "accuracy": 0.571078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.3471773610035598,
+              "macro_f1": 0.5713026597654893,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "frozen_subnet_fp32": {
+              "accuracy": 0.571078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.49856028200520086,
+              "macro_f1": 0.5713026597654893,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "int8_tflite": {
+              "accuracy": 0.5575980392156863,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.8003349260034156,
+              "macro_f1": 0.5617157730460683,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "keras_fp32": {
+              "accuracy": 0.571078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.49856028200520086,
+              "macro_f1": 0.5713026597654893,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "shared_supernet_fp32": {
+              "accuracy": 0.571078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.6045059400021273,
+              "macro_f1": 0.5713026597654893,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            }
+          }
+        },
+        "2s": {
+          "val": {
+            "comparison": {
+              "int8_minus_fp32_accuracy": -0.002450980392156854
+            },
+            "fp32_tflite": {
+              "accuracy": 0.5821078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.6106234730104916,
+              "macro_f1": 0.579699424867109,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "frozen_subnet_fp32": {
+              "accuracy": 0.5821078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.5614848669865751,
+              "macro_f1": 0.579699424867109,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "int8_tflite": {
+              "accuracy": 0.5796568627450981,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 1.385482656001841,
+              "macro_f1": 0.5800598667293728,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "keras_fp32": {
+              "accuracy": 0.5821078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.5614848669865751,
+              "macro_f1": 0.579699424867109,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "shared_supernet_fp32": {
+              "accuracy": 0.5821078431372549,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.6704925790072593,
+              "macro_f1": 0.579699424867109,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            }
+          }
+        }
+      },
+      "evaluation_context": {
+        "1s": {
+          "val": {
+            "aggregation": "Average softmax probabilities across deterministic crops of each original file, then take argmax; one center crop when num_crops=1.",
+            "audio": {
+              "center": false,
+              "duration_sec": 1.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "class_mapping": {
+              "0": "air_conditioner",
+              "1": "car_horn",
+              "2": "children_playing",
+              "3": "dog_bark",
+              "4": "drilling",
+              "5": "engine_idling",
+              "6": "gun_shot",
+              "7": "jackhammer",
+              "8": "siren",
+              "9": "street_music"
+            },
+            "duration_seen_during_training": true,
+            "effective_width": "25",
+            "evaluation_duration_sec": 1.0,
+            "evaluation_num_crops": 3,
+            "folds": [
+              9
+            ],
+            "run_id": "dscnn_009",
+            "runtime": {
+              "elapsed_seconds": 5.681034143999568,
+              "inference_seconds": 2.2505785090143036,
+              "num_clips": 816,
+              "num_window_predictions": 9504,
+              "num_windows": 2376,
+              "preprocessing_seconds": 3.306337393991271
+            },
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ],
+            "validation_protocol": {
+              "aggregation": "mean_probability",
+              "method": "fixed",
+              "num_crops": 3
+            }
+          }
+        },
+        "2s": {
+          "val": {
+            "aggregation": "Average softmax probabilities across deterministic crops of each original file, then take argmax; one center crop when num_crops=1.",
+            "audio": {
+              "center": false,
+              "duration_sec": 2.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "class_mapping": {
+              "0": "air_conditioner",
+              "1": "car_horn",
+              "2": "children_playing",
+              "3": "dog_bark",
+              "4": "drilling",
+              "5": "engine_idling",
+              "6": "gun_shot",
+              "7": "jackhammer",
+              "8": "siren",
+              "9": "street_music"
+            },
+            "duration_seen_during_training": true,
+            "effective_width": "25",
+            "evaluation_duration_sec": 2.0,
+            "evaluation_num_crops": 3,
+            "folds": [
+              9
+            ],
+            "run_id": "dscnn_009",
+            "runtime": {
+              "elapsed_seconds": 7.799275555000349,
+              "inference_seconds": 3.228083575006167,
+              "num_clips": 816,
+              "num_window_predictions": 9144,
+              "num_windows": 2286,
+              "preprocessing_seconds": 4.465473221993307
+            },
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ],
+            "validation_protocol": {
+              "aggregation": "mean_probability",
+              "method": "fixed",
+              "num_crops": 3
+            }
+          }
+        }
+      },
+      "exports": {
+        "1s": {
+          "fp32": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  49,
+                  64,
+                  8
+                ],
+                [
+                  25,
+                  32,
+                  16
+                ],
+                [
+                  13,
+                  16,
+                  32
+                ],
+                [
+                  7,
+                  8,
+                  32
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                8,
+                16,
+                32,
+                32
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 1.0,
+              "energy_mj": null,
+              "estimated_macs": 596032,
+              "input_shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 2658,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 10632
+            },
+            "byte_size": 15520,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "25",
+            "export_duration_sec": 1.0,
+            "filename": "exports/1s/fp32.tflite",
+            "frozen_weight_sha256": "a81849463d1a9d65e395fddc60b04d61dc986383fe5df53a4c15c6e031c1aaac",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "zero_point": 0
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 0
+            },
+            "run_id": "dscnn_009",
+            "sha256": "da29cb64f1c4e37e9e8292b4d2d00dc2ee7b922901a84fa446d865edad905143",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          },
+          "int8": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  49,
+                  64,
+                  8
+                ],
+                [
+                  25,
+                  32,
+                  16
+                ],
+                [
+                  13,
+                  16,
+                  32
+                ],
+                [
+                  7,
+                  8,
+                  32
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                8,
+                16,
+                32,
+                32
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 1.0,
+              "energy_mj": null,
+              "estimated_macs": 596032,
+              "input_shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 2658,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 10632
+            },
+            "byte_size": 12080,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "25",
+            "export_duration_sec": 1.0,
+            "filename": "exports/1s/int8.tflite",
+            "frozen_weight_sha256": "a81849463d1a9d65e395fddc60b04d61dc986383fe5df53a4c15c6e031c1aaac",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "int8",
+              "scale": 0.0785151794552803,
+              "shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "zero_point": 48
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [
+                {
+                  "matching_int8_quantization": true,
+                  "operator": "REDUCE_MAX"
+                }
+              ],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "int8",
+              "scale": 0.09817119687795639,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": -21
+            },
+            "run_id": "dscnn_009",
+            "sha256": "0926fffce1e63c998fe51a6a97160d4aa2a373364c9c832386e985f1fb980d21",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          }
+        },
+        "2s": {
+          "fp32": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  99,
+                  64,
+                  8
+                ],
+                [
+                  50,
+                  32,
+                  16
+                ],
+                [
+                  25,
+                  16,
+                  32
+                ],
+                [
+                  13,
+                  8,
+                  32
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                8,
+                16,
+                32,
+                32
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 2.0,
+              "energy_mj": null,
+              "estimated_macs": 1175360,
+              "input_shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 2658,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 10632
+            },
+            "byte_size": 15520,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "25",
+            "export_duration_sec": 2.0,
+            "filename": "exports/2s/fp32.tflite",
+            "frozen_weight_sha256": "a81849463d1a9d65e395fddc60b04d61dc986383fe5df53a4c15c6e031c1aaac",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "zero_point": 0
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 0
+            },
+            "run_id": "dscnn_009",
+            "sha256": "e808a6a8b63a5625cadc0e88c770481e99aa7544a4be74cd076477021e7142cb",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          },
+          "int8": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  99,
+                  64,
+                  8
+                ],
+                [
+                  50,
+                  32,
+                  16
+                ],
+                [
+                  25,
+                  16,
+                  32
+                ],
+                [
+                  13,
+                  8,
+                  32
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                8,
+                16,
+                32,
+                32
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 2.0,
+              "energy_mj": null,
+              "estimated_macs": 1175360,
+              "input_shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 2658,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 10632
+            },
+            "byte_size": 12080,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "25",
+            "export_duration_sec": 2.0,
+            "filename": "exports/2s/int8.tflite",
+            "frozen_weight_sha256": "a81849463d1a9d65e395fddc60b04d61dc986383fe5df53a4c15c6e031c1aaac",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "int8",
+              "scale": 0.0785151794552803,
+              "shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "zero_point": 48
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [
+                {
+                  "matching_int8_quantization": true,
+                  "operator": "REDUCE_MAX"
+                }
+              ],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "int8",
+              "scale": 0.0998205617070198,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": -27
+            },
+            "run_id": "dscnn_009",
+            "sha256": "6e48106ff1cf3627c6d701fd33f97be3e9719052ffce83139c72806350e97db1",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          }
+        }
+      },
+      "file_hashes": {
+        "best.keras": "e90604dcc6270f292b8755cc039bced39615be527a09bfbc8a124b5696f97ec1",
+        "exports/1s/fp32.tflite": "da29cb64f1c4e37e9e8292b4d2d00dc2ee7b922901a84fa446d865edad905143",
+        "exports/1s/int8.tflite": "0926fffce1e63c998fe51a6a97160d4aa2a373364c9c832386e985f1fb980d21",
+        "exports/2s/fp32.tflite": "e808a6a8b63a5625cadc0e88c770481e99aa7544a4be74cd076477021e7142cb",
+        "exports/2s/int8.tflite": "6e48106ff1cf3627c6d701fd33f97be3e9719052ffce83139c72806350e97db1"
+      },
+      "metadata": {
+        "canonical_name": "DSCNN_128_DW_25",
+        "class_mapping": {
+          "0": "air_conditioner",
+          "1": "car_horn",
+          "2": "children_playing",
+          "3": "dog_bark",
+          "4": "drilling",
+          "5": "engine_idling",
+          "6": "gun_shot",
+          "7": "jackhammer",
+          "8": "siren",
+          "9": "street_music"
+        },
+        "data_source": "UrbanSound8K",
+        "dataset_limit": null,
+        "diagnostic_subset": false,
+        "effective_width": "25",
+        "equivalence_checked_before_bn_recalibration": true,
+        "frozen_supernet_max_abs_error": 0.0,
+        "parent_run_path": "/content/drive/MyDrive/EmbeddedSystem/models/dscnn_009",
+        "registry_root": "/content/drive/MyDrive/EmbeddedSystem/models",
+        "requested_width": "all",
+        "run_id": "dscnn_009",
+        "synthetic_count": 12,
+        "trained_duration_sec": 1.0,
+        "trained_parent": "DSCNN_128_DW_all",
+        "training_duration_secs": [
+          1.0,
+          2.0
+        ]
+      },
+      "schema_version": 4,
+      "state": {
+        "data_source": "UrbanSound8K",
+        "int8_exported": true,
+        "status": "complete"
+      },
+      "updated_at": "2026-11-05T10:50:43.592278+00:00"
+    },
+    "subnets/DSCNN_128_DW_5": {
+      "architecture": {
+        "block_output_shapes": [
+          [
+            49,
+            64,
+            16
+          ],
+          [
+            25,
+            32,
+            32
+          ],
+          [
+            13,
+            16,
+            64
+          ],
+          [
+            7,
+            8,
+            64
+          ]
+        ],
+        "block_types": [
+          "SC",
+          "DW",
+          "DW",
+          "DW"
+        ],
+        "channels": [
+          16,
+          32,
+          64,
+          64
+        ],
+        "device_latency_ms": null,
+        "duration_sec": 1.0,
+        "energy_mj": null,
+        "estimated_macs": 1724544,
+        "input_shape": [
+          1,
+          98,
+          128,
+          1
+        ],
+        "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+        "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+        "num_parameters": 8634,
+        "output_shape": [
+          1,
+          10
+        ],
+        "pooling": "max",
+        "tensor_arena_bytes": null,
+        "weight_float32_bytes": 34536
+      },
+      "bn_recalibration": {
+        "applied": false,
+        "reason": "disabled",
+        "samples": 0
+      },
+      "calibration": {
+        "1s": {
+          "representative": {
+            "audio": {
+              "center": false,
+              "duration_sec": 1.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "augmentation": false,
+            "file_ids_sha256": "7499cb5c6ef22b274b73cfdfc0f6f7c1d28018f223c482019e6888da2e9e557f",
+            "folds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "normalization": "none",
+            "num_samples": 128,
+            "seed": 42,
+            "split": "train"
+          }
+        },
+        "2s": {
+          "representative": {
+            "audio": {
+              "center": false,
+              "duration_sec": 2.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "augmentation": false,
+            "file_ids_sha256": "7499cb5c6ef22b274b73cfdfc0f6f7c1d28018f223c482019e6888da2e9e557f",
+            "folds": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "normalization": "none",
+            "num_samples": 128,
+            "seed": 42,
+            "split": "train"
+          }
+        }
+      },
+      "deployment": {
+        "device_measurements": null,
+        "note": "Static built-in operators audited at export; target firmware registration, optimized kernels and arena require device validation.",
+        "status": "host_validated_only",
+        "tensor_arena_bytes": null
+      },
+      "evaluation": {
+        "1s": {
+          "val": {
+            "comparison": {
+              "int8_minus_fp32_accuracy": -0.003676470588235281
+            },
+            "fp32_tflite": {
+              "accuracy": 0.6605392156862745,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.44178984100653906,
+              "macro_f1": 0.6632558558748617,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "frozen_subnet_fp32": {
+              "accuracy": 0.6605392156862745,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.48394502999508404,
+              "macro_f1": 0.6632558558748617,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "int8_tflite": {
+              "accuracy": 0.6568627450980392,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.8687989940008265,
+              "macro_f1": 0.6622023765139958,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "keras_fp32": {
+              "accuracy": 0.6605392156862745,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.48394502999508404,
+              "macro_f1": 0.6632558558748617,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            },
+            "shared_supernet_fp32": {
+              "accuracy": 0.6605392156862745,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.5965807539905654,
+              "macro_f1": 0.6632558558748617,
+              "num_crops": 2376,
+              "num_original_files": 816,
+              "num_windows": 2376,
+              "split": "val"
+            }
+          }
+        },
+        "2s": {
+          "val": {
+            "comparison": {
+              "int8_minus_fp32_accuracy": 0.001225490196078427
+            },
+            "fp32_tflite": {
+              "accuracy": 0.6691176470588235,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.7746346670064668,
+              "macro_f1": 0.66436465234304,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "frozen_subnet_fp32": {
+              "accuracy": 0.6691176470588235,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.5567239349911688,
+              "macro_f1": 0.66436465234304,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "int8_tflite": {
+              "accuracy": 0.6703431372549019,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 1.528472377016442,
+              "macro_f1": 0.6716795492249386,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "keras_fp32": {
+              "accuracy": 0.6691176470588235,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.5567239349911688,
+              "macro_f1": 0.66436465234304,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            },
+            "shared_supernet_fp32": {
+              "accuracy": 0.6691176470588235,
+              "data_source": "UrbanSound8K",
+              "diagnostic_subset": false,
+              "empirical_dataset_result": true,
+              "inference_seconds": 0.6529237409995403,
+              "macro_f1": 0.66436465234304,
+              "num_crops": 2286,
+              "num_original_files": 816,
+              "num_windows": 2286,
+              "split": "val"
+            }
+          }
+        }
+      },
+      "evaluation_context": {
+        "1s": {
+          "val": {
+            "aggregation": "Average softmax probabilities across deterministic crops of each original file, then take argmax; one center crop when num_crops=1.",
+            "audio": {
+              "center": false,
+              "duration_sec": 1.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "class_mapping": {
+              "0": "air_conditioner",
+              "1": "car_horn",
+              "2": "children_playing",
+              "3": "dog_bark",
+              "4": "drilling",
+              "5": "engine_idling",
+              "6": "gun_shot",
+              "7": "jackhammer",
+              "8": "siren",
+              "9": "street_music"
+            },
+            "duration_seen_during_training": true,
+            "effective_width": "5",
+            "evaluation_duration_sec": 1.0,
+            "evaluation_num_crops": 3,
+            "folds": [
+              9
+            ],
+            "run_id": "dscnn_009",
+            "runtime": {
+              "elapsed_seconds": 5.69369398300114,
+              "inference_seconds": 2.391114618993015,
+              "num_clips": 816,
+              "num_window_predictions": 9504,
+              "num_windows": 2376,
+              "preprocessing_seconds": 3.1779039970024314
+            },
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ],
+            "validation_protocol": {
+              "aggregation": "mean_probability",
+              "method": "fixed",
+              "num_crops": 3
+            }
+          }
+        },
+        "2s": {
+          "val": {
+            "aggregation": "Average softmax probabilities across deterministic crops of each original file, then take argmax; one center crop when num_crops=1.",
+            "audio": {
+              "center": false,
+              "duration_sec": 2.0,
+              "fft_length": 512,
+              "frame_length_ms": 25,
+              "hop_length_ms": 10,
+              "log_offset": 1e-06,
+              "mono": "mean",
+              "n_mels": 128,
+              "normalization": "none",
+              "normalization_mean": 0.0,
+              "normalization_std": 1.0,
+              "padding": "center",
+              "sample_rate": 16000,
+              "spectrum": "power"
+            },
+            "class_mapping": {
+              "0": "air_conditioner",
+              "1": "car_horn",
+              "2": "children_playing",
+              "3": "dog_bark",
+              "4": "drilling",
+              "5": "engine_idling",
+              "6": "gun_shot",
+              "7": "jackhammer",
+              "8": "siren",
+              "9": "street_music"
+            },
+            "duration_seen_during_training": true,
+            "effective_width": "5",
+            "evaluation_duration_sec": 2.0,
+            "evaluation_num_crops": 3,
+            "folds": [
+              9
+            ],
+            "run_id": "dscnn_009",
+            "runtime": {
+              "elapsed_seconds": 8.290478530001565,
+              "inference_seconds": 3.5127547200136178,
+              "num_clips": 816,
+              "num_window_predictions": 9144,
+              "num_windows": 2286,
+              "preprocessing_seconds": 4.667989291003323
+            },
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ],
+            "validation_protocol": {
+              "aggregation": "mean_probability",
+              "method": "fixed",
+              "num_crops": 3
+            }
+          }
+        }
+      },
+      "exports": {
+        "1s": {
+          "fp32": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  49,
+                  64,
+                  16
+                ],
+                [
+                  25,
+                  32,
+                  32
+                ],
+                [
+                  13,
+                  16,
+                  64
+                ],
+                [
+                  7,
+                  8,
+                  64
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                16,
+                32,
+                64,
+                64
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 1.0,
+              "energy_mj": null,
+              "estimated_macs": 1724544,
+              "input_shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 8634,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 34536
+            },
+            "byte_size": 39620,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "5",
+            "export_duration_sec": 1.0,
+            "filename": "exports/1s/fp32.tflite",
+            "frozen_weight_sha256": "1be66ba9c721b08e5478dadbcd4d4daf669bf68aa26d8fb438ae66968932f391",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "zero_point": 0
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 0
+            },
+            "run_id": "dscnn_009",
+            "sha256": "76567c1365e3ec7f07893b48d6b3344706a2ba585335906577a962624c13d201",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          },
+          "int8": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  49,
+                  64,
+                  16
+                ],
+                [
+                  25,
+                  32,
+                  32
+                ],
+                [
+                  13,
+                  16,
+                  64
+                ],
+                [
+                  7,
+                  8,
+                  64
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                16,
+                32,
+                64,
+                64
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 1.0,
+              "energy_mj": null,
+              "estimated_macs": 1724544,
+              "input_shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 8634,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 34536
+            },
+            "byte_size": 21976,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "5",
+            "export_duration_sec": 1.0,
+            "filename": "exports/1s/int8.tflite",
+            "frozen_weight_sha256": "1be66ba9c721b08e5478dadbcd4d4daf669bf68aa26d8fb438ae66968932f391",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "int8",
+              "scale": 0.0785151794552803,
+              "shape": [
+                1,
+                98,
+                128,
+                1
+              ],
+              "zero_point": 48
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [
+                {
+                  "matching_int8_quantization": true,
+                  "operator": "REDUCE_MAX"
+                }
+              ],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "int8",
+              "scale": 0.15085862576961517,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": -1
+            },
+            "run_id": "dscnn_009",
+            "sha256": "f71d56e342d41ac02835b20ebabd1f6c0e3f354b368eb746a6ca0069a8f6da45",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          }
+        },
+        "2s": {
+          "fp32": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  99,
+                  64,
+                  16
+                ],
+                [
+                  50,
+                  32,
+                  32
+                ],
+                [
+                  25,
+                  16,
+                  64
+                ],
+                [
+                  13,
+                  8,
+                  64
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                16,
+                32,
+                64,
+                64
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 2.0,
+              "energy_mj": null,
+              "estimated_macs": 3382912,
+              "input_shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 8634,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 34536
+            },
+            "byte_size": 39620,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "5",
+            "export_duration_sec": 2.0,
+            "filename": "exports/2s/fp32.tflite",
+            "frozen_weight_sha256": "1be66ba9c721b08e5478dadbcd4d4daf669bf68aa26d8fb438ae66968932f391",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "zero_point": 0
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "float32",
+              "scale": 0.0,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": 0
+            },
+            "run_id": "dscnn_009",
+            "sha256": "1f6bc8707b75f05549985bacb9757ff58ab4545b676ce6dcd34f03e5cc95b0c4",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          },
+          "int8": {
+            "architecture": {
+              "block_output_shapes": [
+                [
+                  99,
+                  64,
+                  16
+                ],
+                [
+                  50,
+                  32,
+                  32
+                ],
+                [
+                  25,
+                  16,
+                  64
+                ],
+                [
+                  13,
+                  8,
+                  64
+                ]
+              ],
+              "block_types": [
+                "SC",
+                "DW",
+                "DW",
+                "DW"
+              ],
+              "channels": [
+                16,
+                32,
+                64,
+                64
+              ],
+              "device_latency_ms": null,
+              "duration_sec": 2.0,
+              "energy_mj": null,
+              "estimated_macs": 3382912,
+              "input_shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "macs_method": "One multiply-accumulate per kernel multiply; SAME stride-2 outputs; conv/depthwise/dense only; excludes bias/ReLU/pooling/frontend.",
+              "normalization": "BN-free; bias and ReLU after each SC or DW+pointwise block",
+              "num_parameters": 8634,
+              "output_shape": [
+                1,
+                10
+              ],
+              "pooling": "max",
+              "tensor_arena_bytes": null,
+              "weight_float32_bytes": 34536
+            },
+            "byte_size": 21976,
+            "calibration_count": 128,
+            "calibration_split": "train",
+            "cpu_invocation_success": true,
+            "data_source": "UrbanSound8K",
+            "effective_width": "5",
+            "export_duration_sec": 2.0,
+            "filename": "exports/2s/int8.tflite",
+            "frozen_weight_sha256": "1be66ba9c721b08e5478dadbcd4d4daf669bf68aa26d8fb438ae66968932f391",
+            "identical_frozen_weights": true,
+            "input": {
+              "dtype": "int8",
+              "scale": 0.0785151794552803,
+              "shape": [
+                1,
+                198,
+                128,
+                1
+              ],
+              "zero_point": 48
+            },
+            "micro_compatibility": {
+              "esp_nn_optimization_verified": false,
+              "firmware_invocation_verified": false,
+              "fixed_input_shape": true,
+              "issues": [],
+              "limitation": "Registration/static checks only. Verify operator versions, firmware kernels, arena, frontend parity and on-board invocation on the target; desktop TFLite success is insufficient.",
+              "operators": [
+                "CONV_2D",
+                "DEPTHWISE_CONV_2D",
+                "FULLY_CONNECTED",
+                "REDUCE_MAX"
+              ],
+              "quantization_checks": [
+                {
+                  "matching_int8_quantization": true,
+                  "operator": "REDUCE_MAX"
+                }
+              ],
+              "reference_kernels_to_budget": [
+                "REDUCE_MAX"
+              ],
+              "required_resolver_calls": [
+                "AddConv2D",
+                "AddDepthwiseConv2D",
+                "AddFullyConnected",
+                "AddReduceMax"
+              ],
+              "runtime_resize_required": false,
+              "source": "https://github.com/espressif/esp-tflite-micro/tree/master/tensorflow/lite/micro",
+              "source_reviewed_date": "2026-11-04",
+              "status": "static_checks_passed",
+              "tensor_arena_bytes": null,
+              "unreviewed_operators": []
+            },
+            "operators": [
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "DEPTHWISE_CONV_2D",
+              "CONV_2D",
+              "REDUCE_MAX",
+              "FULLY_CONNECTED",
+              "DELEGATE",
+              "DELEGATE"
+            ],
+            "output": {
+              "dtype": "int8",
+              "scale": 0.14167451858520508,
+              "shape": [
+                1,
+                10
+              ],
+              "zero_point": -1
+            },
+            "run_id": "dscnn_009",
+            "sha256": "6bd406ecde5ad0b42bc9f684ffb334a217208f8963c8b3bb11ea17337c6bb742",
+            "tensor_arena_bytes": null,
+            "trained_duration_sec": 1.0,
+            "trained_parent": "DSCNN_128_DW_all",
+            "training_duration_secs": [
+              1.0,
+              2.0
+            ]
+          }
+        }
+      },
+      "file_hashes": {
+        "best.keras": "857e31a191b8543298afc671b85e5dbfd509f4757be59be555b90a005e728dc6",
+        "exports/1s/fp32.tflite": "76567c1365e3ec7f07893b48d6b3344706a2ba585335906577a962624c13d201",
+        "exports/1s/int8.tflite": "f71d56e342d41ac02835b20ebabd1f6c0e3f354b368eb746a6ca0069a8f6da45",
+        "exports/2s/fp32.tflite": "1f6bc8707b75f05549985bacb9757ff58ab4545b676ce6dcd34f03e5cc95b0c4",
+        "exports/2s/int8.tflite": "6bd406ecde5ad0b42bc9f684ffb334a217208f8963c8b3bb11ea17337c6bb742"
+      },
+      "metadata": {
+        "canonical_name": "DSCNN_128_DW_5",
+        "class_mapping": {
+          "0": "air_conditioner",
+          "1": "car_horn",
+          "2": "children_playing",
+          "3": "dog_bark",
+          "4": "drilling",
+          "5": "engine_idling",
+          "6": "gun_shot",
+          "7": "jackhammer",
+          "8": "siren",
+          "9": "street_music"
+        },
+        "data_source": "UrbanSound8K",
+        "dataset_limit": null,
+        "diagnostic_subset": false,
+        "effective_width": "5",
+        "equivalence_checked_before_bn_recalibration": true,
+        "frozen_supernet_max_abs_error": 0.0,
+        "parent_run_path": "/content/drive/MyDrive/EmbeddedSystem/models/dscnn_009",
+        "registry_root": "/content/drive/MyDrive/EmbeddedSystem/models",
+        "requested_width": "all",
+        "run_id": "dscnn_009",
+        "synthetic_count": 12,
+        "trained_duration_sec": 1.0,
+        "trained_parent": "DSCNN_128_DW_all",
+        "training_duration_secs": [
+          1.0,
+          2.0
+        ]
+      },
+      "schema_version": 4,
+      "state": {
+        "data_source": "UrbanSound8K",
+        "int8_exported": true,
+        "status": "complete"
+      },
+      "updated_at": "2026-11-05T10:50:23.514697+00:00"
+    }
+  },
+  "test": null,
+  "timing": {
+    "epoch_elapsed_seconds": [
+      72.16366753500188,
+      61.70207805300015,
+      61.81141680800283,
+      62.468071740000596,
+      62.40726242099845,
+      62.68236357099886,
+      60.737641948999226,
+      61.333797838000464,
+      63.17496092700094,
+      61.81840731000193,
+      62.33193006500005,
+      61.807759963001445,
+      62.78833839100116,
+      63.150374018998264,
+      63.43133805099933,
+      62.08618939699954,
+      61.758240453000326,
+      62.082625948001805,
+      61.974829347000195,
+      62.169507786002214,
+      62.69677166999827,
+      62.01458934599941,
+      61.04162637199988,
+      62.59458755000014,
+      61.95570021999811,
+      62.471371534000355,
+      63.019107834999886,
+      62.34896826100157,
+      61.21176133900008,
+      62.372097681000014,
+      62.341804211002454,
+      61.81902327300122,
+      62.35463358299967,
+      61.32345230000283,
+      61.244859744998394,
+      61.463456957000744,
+      61.55640698500065,
+      62.85549860800165,
+      61.637413505999575,
+      61.019562450001104,
+      61.73170684300203
+    ],
+    "epoch_training_seconds": [
+      60.424582324001676,
+      49.856102030997135,
+      50.338330666996626,
+      50.87557471599939,
+      50.85085008799797,
+      51.396823929000675,
+      49.563465201001236,
+      50.21273869600191,
+      51.39981411199915,
+      50.460795839997445,
+      51.081151178001164,
+      50.392869218998385,
+      51.353315479998855,
+      51.38978743899861,
+      51.86917798200011,
+      50.75136393300272,
+      50.37534818099812,
+      50.51024776999839,
+      50.23831899200013,
+      50.66289602899997,
+      51.24806548899869,
+      50.4040338800005,
+      49.48203834599917,
+      51.17495499299912,
+      50.622565297999245,
+      51.13823495000179,
+      51.580816924997634,
+      51.046485710001434,
+      49.86932505599907,
+      51.01532203399984,
+      50.875340775997756,
+      50.459698923998076,
+      50.95318434300134,
+      49.830084130000614,
+      49.36030302400104,
+      50.04354478199821,
+      50.127790850001475,
+      51.3471722150025,
+      50.20925020499999,
+      49.8074500119983,
+      50.19000275600047
+    ],
+    "epoch_validation_seconds": [
+      11.699550670000463,
+      11.8108986369989,
+      11.440415566004958,
+      11.557548430999304,
+      11.520562052002788,
+      11.24995295899862,
+      11.169641423002759,
+      11.116551767998317,
+      11.73949703299877,
+      11.323922692998167,
+      11.245946948998608,
+      11.380652929001371,
+      11.400088445996516,
+      11.726053665002837,
+      11.557823916999041,
+      11.330762003999553,
+      11.376444016001187,
+      11.538375805004762,
+      11.731895378001354,
+      11.501818423002987,
+      11.443396623999433,
+      11.57599889100311,
+      11.524671216004208,
+      11.415412725997157,
+      11.328547025001171,
+      11.327961205002794,
+      11.402651455999148,
+      11.267718267998134,
+      11.337900216996786,
+      11.352354712002125,
+      11.460825159003434,
+      11.323369517001993,
+      11.368030286001158,
+      11.488658439000574,
+      11.879985425002815,
+      11.41503011399982,
+      11.423755867999716,
+      11.504244062994985,
+      11.423151175000385,
+      11.207718694004143,
+      11.537238611999783
+    ],
+    "eta_method": "moving mean of recent epochs; excludes export; early stopping may finish sooner",
+    "training_elapsed_seconds": 2556.1331761340007,
+    "validation_total_seconds": 469.42702245602413
+  },
+  "updated_at": "2026-11-05T10:50:47.029416+00:00",
+  "validation": {
+    "accuracy": 0.6501225490196079,
+    "by_configuration": {
+      "1": {
+        "1s": {
+          "accuracy": 0.7034313725490197,
+          "macro_f1": 0.7165088552119288,
+          "num_clips": 816,
+          "num_windows": 2376
+        },
+        "2s": {
+          "accuracy": 0.7144607843137255,
+          "macro_f1": 0.7247566890616352,
+          "num_clips": 816,
+          "num_windows": 2286
+        }
+      },
+      "25": {
+        "1s": {
+          "accuracy": 0.571078431372549,
+          "macro_f1": 0.5713026597654893,
+          "num_clips": 816,
+          "num_windows": 2376
+        },
+        "2s": {
+          "accuracy": 0.5821078431372549,
+          "macro_f1": 0.579699424867109,
+          "num_clips": 816,
+          "num_windows": 2286
+        }
+      },
+      "5": {
+        "1s": {
+          "accuracy": 0.6605392156862745,
+          "macro_f1": 0.6632558558748617,
+          "num_clips": 816,
+          "num_windows": 2376
+        },
+        "2s": {
+          "accuracy": 0.6691176470588235,
+          "macro_f1": 0.66436465234304,
+          "num_clips": 816,
+          "num_windows": 2286
+        }
+      }
+    },
+    "count_scope": "Unique clips; windows summed over durations; window predictions also count each width.",
+    "inference_seconds": 3.4689207219780656,
+    "macro_f1": 0.6533146895206773,
+    "num_clips": 816,
+    "num_window_predictions": 13986,
+    "num_windows": 4662,
+    "per_duration": {
+      "1s": {
+        "accuracy": 0.6450163398692811,
+        "macro_f1": 0.6503557902840933
+      },
+      "2s": {
+        "accuracy": 0.6552287581699346,
+        "macro_f1": 0.6562735887572614
+      }
+    },
+    "preprocessing_seconds": 7.684867122985452,
+    "protocol": {
+      "aggregation": "mean_probability",
+      "method": "fixed",
+      "num_crops": 3
+    },
+    "runtime_seconds": 11.368030286001158
+  }
+}

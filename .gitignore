@@ -3,9 +3,4 @@ __pycache__/
 .DS_Store
 features/*
 !features/.gitkeep
-<<<<<<< HEAD
-=======
-models/*
-!models/.gitkeep
->>>>>>> origin/main
 .pytest_cache/
