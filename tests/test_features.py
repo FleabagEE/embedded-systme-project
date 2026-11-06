@@ -7,12 +7,12 @@ from tests.common import config
 class FeatureTests(unittest.TestCase):
     def test_shapes_and_finite_reproducible_silence(self):
         c = config()
-        for duration in (1, 2):
-            for mels in (40, 64):
+        for duration in (1, 1.5, 2):
+            for mels in (40, 64, 128):
                 c['audio'].update(duration_sec=duration, n_mels=mels)
-                y = np.zeros(16000 * duration, np.float32)
+                y = np.zeros(round(16000 * duration), np.float32)
                 out = log_mel(y, c['audio'])
-                self.assertEqual(out.shape, (98 if duration == 1 else 198, mels, 1))
+                self.assertEqual(out.shape, ({1: 98, 1.5: 148, 2: 198}[duration], mels, 1))
                 self.assertEqual(out.shape, feature_shape(c['audio']))
                 self.assertTrue(np.all(np.isfinite(out)))
                 np.testing.assert_array_equal(out, log_mel(y, c['audio']))

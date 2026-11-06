@@ -1,0 +1,93 @@
+dataset:
+  root: /Users/colin/sound_datasets/urbansound8k
+  train_folds: [1, 2, 3, 4, 5, 6, 7, 8]
+  val_folds: [9]
+  test_folds: [10]
+  cache_dir: features/waveforms
+audio:
+  sample_rate: 16000
+  duration_sec: 1.0
+  n_mels: 64 # Supported Log-Mel resolutions: 40, 64, 128.
+  frame_length_ms: 25
+  hop_length_ms: 10
+  fft_length: 512
+  log_offset: 0.000001
+  spectrum: power
+  mono: mean
+  normalization: none
+  normalization_mean: 0.0
+  normalization_std: 1.0
+  padding: center
+  center: false
+augmentation:
+  enabled: true
+  waveform:
+    RandomTimeShift: {enabled: true, probability: 0.5, max_seconds: 0.2}
+    RandomGain: {enabled: true, probability: 0.5, min_db: -6.0, max_db: 6.0}
+    AddBackgroundNoise: {enabled: true, probability: 0.4, min_snr_db: 15.0, max_snr_db: 30.0, source: gaussian}
+    PitchShift: {enabled: true, probability: 0.2, min_semitones: -1.0, max_semitones: 1.0}
+    TimeStretch: {enabled: true, probability: 0.2, min_rate: 0.9, max_rate: 1.1}
+  spectrogram:
+    FrequencyMask: {enabled: true, probability: 0.5, max_bins: 4}
+    TimeMask: {enabled: true, probability: 0.5, max_frames: 10, reference_frames: 100}
+model:
+  architecture: dscnn
+  mobile_spatial_conv: DW # MobileNet only: DW (original) or SC (3x3 ablation).
+  pooling: avg
+  width_options: ['1', '5', '25']
+  stem_channels: 16
+  stage_channels: [16, 24, 32, 48]
+  stage_strides: [1, 2, 2, 1]
+  stage_repeats: [1, 2, 2, 1]
+  expansion_ratio: 3
+  batch_norm: {momentum: 0.9, epsilon: 0.001}
+  conv_type: SC
+  standard_stem: true
+  width: 'all'
+  num_blocks: 4
+  base_channels: [32, 64, 128, 128]
+  kernel_size: 3
+  global_average_pooling: true
+  num_classes: 10
+training:
+  duration_secs: [1, 2]
+  epochs: 50
+  batch_size: 32
+  optimizer: adam
+  learning_rate: 0.001
+  seed: 42
+  early_stopping_patience: 8
+  monitor: val_accuracy
+  lr_patience: 3
+  lr_factor: 0.5
+  min_learning_rate: 0.00001
+  eta_window: 5
+  eta_min_epochs: 2
+validation:
+  method: sliding_window # fixed preserves the existing evaluation.num_crops protocol.
+  stride_seconds: 0.5
+  aggregation: mean_probability
+  batch_size: 32
+  include_last_window: true
+  short_clip_padding: zero
+  cache_features: true # Temporary, deterministic audio/features only; never predictions.
+evaluation:
+  num_crops: 3
+  include_confusion_matrix: false
+all_width_training:
+  loss_weights: [1.0, 1.0, 1.0]
+  shared_weights: true
+  width_order: ['1', '5', '25']
+  strategy: all
+  sandwich_random_widths: 1
+quantization:
+  representative_samples: 128
+  int8_in_and_out: true
+  output_duration_secs: [] # Follow training.duration_secs; explicitly list durations to override.
+  formats: [fp32, int8]
+  bn_recalibration_samples: 0
+runtime:
+  device: auto
+  deterministic: true
+  output_dir: models
+  work_dir: null

@@ -4,7 +4,6 @@ import argparse
 import copy
 import hashlib
 import json
-import platform
 
 import numpy as np
 
@@ -16,16 +15,16 @@ def runtime_info():
 
 
 def select_device(tf, runtime):
-    """Select before initialization. Auto prefers the first TensorFlow GPU (Metal on Mac)."""
+    """Auto selects CUDA only; non-CUDA builds consistently use CPU."""
     global _selection
     requested = runtime['device']
-    if requested not in ('auto', 'cpu', 'gpu'):
-        raise ValueError('runtime.device must be auto, cpu, or gpu')
+    if requested not in ('auto', 'cpu', 'gpu', 'cuda'):
+        raise ValueError('runtime.device must be auto, cpu, or cuda')
     gpus = tf.config.list_physical_devices('GPU')
-    if requested == 'gpu' and not gpus:
-        raise RuntimeError('GPU requested but tf.config.list_physical_devices("GPU") is empty. '
-                           'Check Metal access/plugin installation or use runtime.device=auto/cpu.')
-    visible = [] if requested == 'cpu' else gpus
+    cuda = bool(tf.test.is_built_with_cuda())
+    if requested in ('gpu', 'cuda') and not (cuda and gpus):
+        raise RuntimeError('CUDA requested but no CUDA-capable TensorFlow GPU is available; use auto/cpu or check the CUDA runtime.')
+    visible = gpus if requested != 'cpu' and cuda else []
     try:
         tf.config.set_visible_devices(visible, 'GPU')
     except RuntimeError as exc:
@@ -33,11 +32,11 @@ def select_device(tf, runtime):
                            'Restart Python before changing runtime.device.') from exc
     tf.config.set_soft_device_placement(True)
     selected = '/GPU:0' if visible else '/CPU:0'
-    reason = ('GPU preferred and detected' if visible else
-              'explicit CPU debugging option' if requested == 'cpu' else 'no TensorFlow GPU detected; CPU fallback')
+    reason = ('CUDA GPU detected' if visible else
+              'explicit CPU option' if requested == 'cpu' else 'CUDA unavailable; CPU fallback')
     _selection = {'framework': 'TensorFlow/Keras', 'requested_device': requested,
                   'selected_device': selected, 'physical_gpus': [d.name for d in gpus],
-                  'backend': 'Metal' if visible and platform.system() == 'Darwin' else 'GPU' if visible else 'CPU',
+                  'backend': 'CUDA' if visible else 'CPU',
                   'reason': reason, 'deterministic_requested': runtime['deterministic'],
                   'gpu_execution_verified': False}
     print(f"Runtime: TensorFlow {tf.__version__}; selected {selected} ({_selection['backend']}); {reason}", flush=True)
@@ -52,7 +51,8 @@ def verify_training_device(config):
     or initial weights. Host-only initializer/shape helpers may use CPU.
     """
     import tensorflow as tf
-    from training.dscnn import SharedCNN, build_model
+    from training.models import build_shared_model, build_model, outputs_logits
+    from training.utils import selected_widths
     from training.features import feature_shape
     from training.losses import width_losses
     if not _selection:
@@ -62,7 +62,7 @@ def verify_training_device(config):
     seed = config['training']['seed']
     try:
         with tf.device(selected):
-            model = SharedCNN(config) if shared else build_model(config)
+            model = build_shared_model(config) if shared else build_model(config)
             shape = feature_shape(config['audio'])
             # Generate input on the host without consuming the experiment RNG.
             x = tf.convert_to_tensor(np.random.default_rng(seed).normal(size=(2, *shape)).astype(np.float32))
@@ -75,16 +75,16 @@ def verify_training_device(config):
             def gradients():
                 with tf.GradientTape() as tape:
                     if shared:
-                        loss, _, outputs = width_losses(model, x, y, config['all_width_training']['loss_weights'])
+                        loss, _, outputs = width_losses(model, x, y, config['all_width_training']['loss_weights'], widths=selected_widths(config))
                     else:
                         output = model(x, training=True)
                         outputs = {config['model']['width']: output}
-                        loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y, output, from_logits=True))
+                        loss = tf.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(y, output, from_logits=outputs_logits(config)))
                 return loss, outputs, tape.gradient(loss, model.trainable_variables)
 
             loss, outputs, grads = gradients()
             # Probe repeatability at identical inputs/weights without assuming
-            # a passing sample guarantees every Metal kernel is deterministic.
+            # a passing sample guarantees every backend kernel is deterministic.
             _, repeated, repeated_grads = gradients()
             exact_repeat = (all(np.array_equal(outputs[w].numpy(), repeated[w].numpy()) for w in outputs)
                             and all(np.array_equal(a.numpy(), b.numpy()) for a, b in zip(grads, repeated_grads)))
@@ -126,7 +126,7 @@ def main():
     # module. Read its state too, rather than the separate __main__ namespace.
     from training import runtime as runtime_module
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', default='configs/baseline.yaml')
+    parser.add_argument('--config', default='config.yaml')
     parser.add_argument('--set', action='append', default=[])
     parser.add_argument('--output', help='Optional JSON verification report path')
     args = parser.parse_args()

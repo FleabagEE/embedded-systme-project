@@ -1,129 +1,105 @@
-# Implementation and verification report
+# Implementation notes
 
-Implemented on 2026-10-23 using only
-`/opt/miniconda3/envs/tinyml-tf/bin/python` for Python execution.
+The current implementation is an in-place TensorFlow 2.15 / Keras 2.15 refactor
+on `colab-training`. Use `config.yaml`, the README commands, and
+`notebooks/colab_training.ipynb`; generated experiments use `report.json` plus an
+optional history.csv. No per-experiment Markdown reports are generated.
 
-## Delivered
+Retained: SC/DW, standard stem, nested shared widths, mixed-duration batching,
+GAP, official folds, FP32/INT8 TFLite validation, legacy registry export, and the
+CREST profiling identity/schema. There were no physical CREST adapters in the
+repository; no board integration or measurements are claimed.
 
-- Local UrbanSound8K metadata/WAV loading with official fold separation and native
-  labels; the previous download-on-import script is now a local inspection CLI.
-- Float PCM mono conversion, high-quality resampling, pitch-preserving speed
-  perturbation, random training crop, centered padding, gain, shared Log-Mel
-  frontend, and safe deterministic waveform caching.
-- Comparable BN-free SC and DW architectures with width tokens 1/5/25 and global
-  pooling; one shared nested-width model for `all`, joint gradient updates, and
-  verified static subnet export for both convolution families.
-- YAML configuration/CLI overrides, deterministic runtime controls, training
-  history, best-weight checkpoints, early stopping, source/environment/data
-  provenance, collision-safe run paths and an atomic process-locked model registry.
-- Fixed-duration FP32 and fully INT8 TFLite export, training-only calibration,
-  scale/zero-point/operator/byte-size metadata, CPU interpreter validation, and
-  original-file accuracy/macro-F1 for Keras, TFLite and shared/frozen subnets.
-- Baseline/search configurations, dataset-independent unittest suite, README,
-  future deployment/selection boundaries and profiling schema.
+Added: 1.5-second inputs (148 frames), CPU/CUDA runtime selection, independent
+online waveform/spectrogram Compose transforms, accuracy-only checkpoint control,
+durable experiment sequence allocation, report-derived summary, subprocess sweeps
+with completed-run skipping, and a lightweight Colab controller.
 
-`requirements-lock.txt` SHA-256 before and after implementation:
-`91c6982b6763258442807c560fadd9a46a7fa89060d0e53f065260b4ba5b8317`.
-No new environment, installation, dataset download, or held-out test evaluation
-was performed. The workspace was not a Git repository; code source hashes are
-recorded instead of fabricating a commit ID.
+The architecture extension adds MobileNetV2-Tiny (inverted residuals, ReLU6,
+width-specific BatchNorm parameters/statistics), avg/max/mix global pooling for
+both model families, optional sandwich sampling and training-only population BN
+recalibration. A common model dispatcher retains one training/export pipeline.
+Validation aggregates every selected width-duration configuration equally. The
+progress callback reports epoch timing, best checkpoint, LR, patience and recent
+mean ETA. New shared runs nest subnet records in one primary report.json; legacy
+per-subnet reports and CREST registry access remain supported.
 
-## Commands and observed outcomes
+Verification for this extension: 50 unit/integration tests passed in the existing
+tinyml-tf environment. Tests include actual shared MobileNet training, all nine
+width-duration combinations, FP32/INT8 conversion and CPU invocation, BN isolation
+and recalibration, frozen-subnet equality, gradient summation, callback ETA and
+checkpoint restoration. A separate real UrbanSound8K diagnostic run (four files
+per split, two epochs, width 0.25, 1.5 seconds, max pooling) completed and exported
+FP32/INT8 models. These small runs do not measure full-dataset accuracy gains.
 
-All commands below use this shell variable:
+Export now records static Micro resolver/operator checks, including int8
+concat/reduce-max scale constraints. Exported input batch and temporal dimensions
+are fixed. Firmware/operator-version validation and ESP-NN acceleration, SRAM,
+latency and physical board execution remain unverified.
+
+Normal training cleanup: 128-Mel support is shared by configuration validation,
+Colab single/batch controls and the default Cartesian search space. Numeric string
+and integral float form values normalize to integer counts before constructing
+features and models. A cheap --check-config path validates actual backend settings
+before any experiment allocation; the regular notebook runs this automatically
+and surfaces mismatched checkout/configuration errors before training.
+
+The dedicated preset controller, preset file, ordered-run handling and special
+starting-number options were removed. General model/export tests were retained
+under test_mel128.py and extended to DS-CNN SC/DW and MobileNet SC/DW 128-Mel
+exports. Interrupted configurations can be rerun individually or from report.json
+under a new per-architecture ID; existing completed artifacts are not modified.
+Partial optimizer-state resumption remains unsupported.
+
+Verification after cleanup: 69 tests passed in tinyml-tf. The ordinary CLI also
+completed a synthetic CPU epoch using the default MobileNet-DW architecture,
+128 Mel bins, all shared widths and 1/2-second inputs, saving the shared checkpoint,
+three Keras subnets and twelve loadable/invokable FP32/INT8 TFLite exports. An older
+resolved report configuration remained readable after removing its controller.
+No completed user experiment files were changed, and no CUDA training was tested.
+
+Verification commands:
+
+Sliding-window validation extension: the canonical config and Colab now default
+to deterministic full-clip sliding windows, stride 0.5 seconds and mean probability
+aggregation. Fixed mode keeps the existing crop positions, padding and aggregation;
+historical configs without the new section retain fixed validation. Maximum
+probability aggregation is also available for sliding windows. All width-duration
+clip accuracies receive equal checkpoint weight.
+
+The new host validation module batches windows and caches resampled audio/exact
+features in private temporary directories, with no prediction caching. Reports
+include protocol, clip/window counts, per-configuration metrics and separate
+training/validation timing. Different evaluation protocols use distinct result
+keys and configuration fingerprints. TFLite input shapes, checkpoint formats,
+training/calibration augmentation policy and CREST profiling remain unchanged.
+
+Verification: 61 tests passed in tinyml-tf, including fixed regression, sliding
+positions/tail/padding, cache and batch invariance, fresh predictions, aggregation,
+all model/width/duration combinations, checkpoint selection and Colab overrides.
+A two-epoch CPU diagnostic run on six local UrbanSound8K clips per split evaluated
+105 windows (315 width-window predictions) per epoch and exported/invoked all 18
+FP32/INT8 variants. Its single report was about 145 KB. Validation took about 1.40s
+then 0.37s; initialization/cache effects and this tiny subset prevent treating
+those figures as a representative performance benchmark. No test-fold selection,
+CUDA execution or physical board measurement was performed.
 
 ```sh
 PY=/opt/miniconda3/envs/tinyml-tf/bin/python
-```
-
-Interpreter inspection found Python 3.11.17, macOS arm64, TensorFlow 2.15.1,
-NumPy 1.26.4 and CPU availability. No supported GPU was reported.
-
-```sh
-"$PY" -m data.loader
 "$PY" -m unittest discover -s tests -v
+"$PY" -m training.train --dry-run --limit 6 --set runtime.device=cpu \
+  --set training.batch_size=2 --set 'training.duration_secs=[1,1.5,2]'
 ```
 
-Dataset inspection found 10 native classes and 8,732 metadata rows, partitioned
-7,079/816/837 across train/validation/test. The completed unittest suite passes
-16 tests. It covers feature shapes and a TensorFlow STFT reference; audio scaling,
-resampling, augmentation order/probability injection; official splits and
-calibration isolation; exact names/overrides/collisions; original-file metrics;
-SC/DW temporal shape flexibility; shared-kernel identity and gradient prefixes;
-joint loss and one optimizer update; frozen/supernet matching; full synthetic
-training/export; INT8 IO/invocation; and identical weights in 1s/2s exports.
+The local environment supports CPU TensorFlow 2.15.1. Tests exercise actual small
+training/INT8 conversion and invocation, concurrent allocation, shared subnets,
+checkpoint selection and equal-duration metrics, online sampling and normalization,
+legacy report/config access, notebook JSON/Python syntax, and absence of embedded
+credentials. Exact results and commit are reported in the delivery message.
 
-```sh
-"$PY" -m training.train --dry-run --set training.batch_size=4 \
-  --set augmentation.enabled=false --run-id baseline_synthetic_smoke
-
-"$PY" -m training.train --set training.epochs=1 --set training.batch_size=4 \
-  --set quantization.representative_samples=12 \
-  --set quantization.output_duration_sec=2 --limit 20 \
-  --run-id baseline_local_verified
-```
-
-Both completed. The real-data check trained on 20 fold-1–8 files, validated on 20
-fold-9 files, calibrated on 12 training files, and wrote FP32/INT8 exports for both
-durations. It is a one-epoch **diagnostic subset**, not a performance benchmark.
-The 1s validation accuracy was 0.05 and macro-F1 was 0.00952381 for Keras FP32,
-FP32 TFLite and INT8 TFLite. Each FP32 file is 39,796 bytes; each INT8 file is
-22,616 bytes. Matching frozen-weight SHA-256 values confirm that 1s/2s exports use
-identical learned weights.
-
-```sh
-"$PY" -m training.train --dry-run --set model.width=all \
-  --set training.batch_size=4 --set augmentation.enabled=false \
-  --set quantization.representative_samples=8 --limit 8 \
-  --run-id multiwidth_final_verified
-
-"$PY" -m training.train --dry-run --set model.width=all \
-  --set model.conv_type=SC --set audio.n_mels=64 --set audio.duration_sec=2 \
-  --set quantization.output_duration_sec=2 --set 'model.base_channels=[8,12]' \
-  --set model.num_blocks=2 --set training.batch_size=2 \
-  --set augmentation.enabled=false --set quantization.representative_samples=4 \
-  --limit 4 --run-id sc64_2s_shared_smoke
-```
-
-The DW 40-bin/1s and SC 64-bin/2s shared smoke runs complete one synthetic epoch,
-save shared checkpoints, and export all three static widths to FP32 and INT8.
-Every exported subnet passes the CPU invocation and shared-model agreement
-checks. Their synthetic metrics are explicitly ineligible as empirical dataset
-results. An initial multiwidth config serialization issue was fixed and is covered
-by the integration test; its failed run directory is retained with diagnostics.
-
-```sh
-"$PY" -m quantization.convert_int8 \
-  --model-dir models/1s/DSCNN_40_DW_5/baseline_local_data_check --duration 2
-"$PY" -m evaluation.evaluate \
-  --model-dir models/1s/DSCNN_40_DW_5/baseline_local_verified \
-  --split val --duration 2 --limit 20
-"$PY" -m evaluation.evaluate \
-  --model-dir models/1s/DSCNN_40_DW_all/multiwidth_synthetic_verified --split val
-"$PY" -m quantization.validate_int8 \
-  models/1s/DSCNN_40_DW_5/baseline_local_verified/exports/1s/int8.tflite
-```
-
-The standalone conversion, evaluation and validation CLIs succeeded. The 1s INT8
-model uses input `[1,98,40,1]`, output `[1,10]`, both INT8, and invokes on CPU.
-The separate 2s model uses input `[1,198,40,1]`. Cross-duration validation uses
-1s-trained weights without retraining and is recorded as such; this tiny subset
-scored 0 accuracy/F1 at 2s. CLI evaluation of shared runs also reloads the original
-shared checkpoint and reports shared/frozen/Keras/TFLite results for each width.
-
-## Limits and work not executed
-
-- Full 50-epoch/full-training-fold experiments and held-out fold-10 evaluation
-  were not run. No useful model accuracy is inferred from these integration checks.
-- Optimizer-state training resume is not implemented; checkpoint behavior is
-  documented. Best weights can be restored for inference and frozen exports.
-- The 48-config search space is supplied as configuration; a batch sweep runner
-  is optional and not implemented.
-- No firmware, device benchmarks, Tensor Arena sizing, latency/energy prediction,
-  or hardware selection policy is implemented or claimed.
-- TensorFlow 2.15 prints generic converter calibration-statistics and Apple
-  optimizer performance warnings. Actual INT8 tensor validation and CPU invocation
-  pass; these warnings did not block the pipeline. GPU training was unavailable
-  and was not required.
-- Linux/platform-specific installation instructions are documented but were not
-  executed; the existing Conda environment needed no changes.
+Limitations: live Colab/CUDA and physical MCU deployment are not tested merely by
+notebook validation or mocked runtime tests. CUDA kernel determinism, driver
+compatibility, Tensor Arena/SRAM and CREST device performance require validation on
+the target system. Optimizer-state resume is not implemented: completed runs can
+be skipped, and failed/interrupted attempts retry under new IDs. Reports preserve
+nulls for unmeasured quantities and clearly label synthetic/subset smoke metrics.

@@ -1,0 +1,2 @@
+-r requirements-training.txt
+tensorflow[and-cuda]==2.15.1; sys_platform == 'linux'

@@ -18,12 +18,12 @@ class ShapeTests(unittest.TestCase):
     def test_same_weights_accept_both_temporal_lengths(self):
         c = config()
         for conv in ('SC', 'DW'):
-            for mels in (40, 64):
+            for mels in (40, 64, 128):
                 c['model']['conv_type'], c['audio']['n_mels'] = conv, mels
                 for width in ('1', '5', '25'):
                     model = build_model(c, width)
                     before = model.get_weights()
-                    for frames in (98, 198):
+                    for frames in (98, 148, 198):
                         out = model(np.ones((2, frames, mels, 1), np.float32))
                         self.assertEqual(tuple(out.shape), (2, 10))
                     for a, b in zip(before, model.get_weights()):

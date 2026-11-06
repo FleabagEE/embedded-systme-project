@@ -5,18 +5,16 @@ import copy
 from pathlib import Path
 import numpy as np
 
-from evaluation.metrics import classification_metrics
-from training.utils import configure_runtime, duration_token, load_config
-from training.artifacts import config_path, read_report, store_result
+from training.utils import configure_runtime, duration_token, load_config, SUPPORTED_DURATIONS, validation_protocol, digest
+from training.artifacts import config_path, read_report, store_result, update_report
 
 
-def evaluate_predictor(predict, dataset, classes, synthetic=False):
-    logits, labels, ids = [], [], []
-    for x, y, file_ids in dataset.batches(training=False):
-        logits.extend(np.asarray(predict(x)))
-        labels.extend(y.tolist())
-        ids.extend(file_ids)
-    return classification_metrics(labels, np.asarray(logits), ids, classes, dataset.split, synthetic)
+def evaluate_predictor(predict, dataset, classes, synthetic=False, from_logits=True):
+    from evaluation.validation import ValidationData, evaluate_configurations
+    with ValidationData(dataset, dataset.config) as data:
+        results, _ = evaluate_configurations({'model': predict}, data, classes,
+            dataset.config['audio']['duration_sec'], synthetic=synthetic, from_logits=from_logits)
+    return results['model']
 
 
 def artifact_directories(path):
@@ -29,47 +27,80 @@ def artifact_directories(path):
     raise FileNotFoundError(f'No best.keras or artifact list in {path}')
 
 
-def evaluate_artifact(artifact, dataset, config, classes, *, duration=None, synthetic=False, diagnostic_subset=False):
+def evaluate_artifact(artifact, dataset, config, classes, *, duration=None, synthetic=False, diagnostic_subset=False, validation_data=None):
     import tensorflow as tf
+    from training.models import outputs_logits, build_shared_model
     from quantization.validate_int8 import TFLiteRunner
     artifact = Path(artifact)
     duration = config['audio']['duration_sec'] if duration is None else duration
+    config = copy.deepcopy(config)
+    config['audio']['duration_sec'] = duration
     model = tf.keras.models.load_model(artifact / 'best.keras', compile=False)
-    results = {'keras_fp32': evaluate_predictor(lambda x: model(x, training=False).numpy(), dataset, classes, synthetic)}
+    predictors = {'keras_fp32': lambda x: model(x, training=False).numpy()}
     for fmt, filename in [('fp32_tflite', 'fp32.tflite'), ('int8_tflite', 'int8.tflite')]:
         path = artifact / 'exports' / duration_token(duration) / filename
         if path.is_file():
-            results[fmt] = evaluate_predictor(TFLiteRunner(path, require_int8=fmt == 'int8_tflite'), dataset, classes, synthetic)
+            predictors[fmt] = TFLiteRunner(path, require_int8=fmt == 'int8_tflite')
     meta = read_report(artifact)['metadata']
     if meta.get('trained_parent'):
-        from training.dscnn import SharedCNN
         # Prefer a colocated checkpoint if the entire run has been moved.
         local_parent = artifact.parent.parent
         parent = local_parent if (local_parent / 'shared_best.weights.h5').is_file() else Path(meta['parent_run_path'])
         checkpoint = parent / 'shared_best.weights.h5'
         if checkpoint.is_file():
-            supernet = SharedCNN(config)
+            supernet = build_shared_model(config)
             from training.features import feature_shape
             supernet(np.zeros([1, *feature_shape(config['audio'])], np.float32))
             supernet.load_weights(checkpoint)
-            results['shared_supernet_fp32'] = evaluate_predictor(
-                lambda x: supernet(x, width=meta['effective_width'], training=False).numpy(), dataset, classes, synthetic)
+            predictors['shared_supernet_fp32'] = lambda x: supernet(x, width=meta['effective_width'], training=False).numpy()
+    from evaluation.validation import ValidationData, evaluate_configurations
+    if validation_data is None:
+        with ValidationData(dataset, config) as data:
+            results, stats = evaluate_configurations(predictors, data, classes, duration,
+                synthetic=synthetic, from_logits=outputs_logits(config))
+    else:
+        if validation_data.protocol != validation_protocol(config):
+            raise ValueError('Prepared validation protocol differs from the requested evaluation')
+        results, stats = evaluate_configurations(predictors, validation_data, classes, duration,
+            synthetic=synthetic, from_logits=outputs_logits(config))
     for record in results.values():
         record.update({'trained_parent': meta.get('trained_parent'), 'effective_width': meta['effective_width'],
                        'run_id': meta['run_id'], 'trained_duration_sec': meta['trained_duration_sec'],
                        'evaluation_duration_sec': duration, 'folds': config['dataset'][f'{dataset.split}_folds'],
                        'training_duration_secs': meta.get('training_duration_secs', [meta['trained_duration_sec']]),
                        'duration_seen_during_training': duration in meta.get('training_duration_secs', [meta['trained_duration_sec']]),
-                       'evaluation_num_crops': config.get('evaluation', {}).get('num_crops', 1),
+                       'evaluation_num_crops': validation_protocol(config).get('num_crops'),
                        'diagnostic_subset': meta.get('diagnostic_subset', False) or diagnostic_subset})
     if meta.get('trained_parent'):
         results['frozen_subnet_fp32'] = copy.deepcopy(results['keras_fp32'])
-    saved_crops = load_config(config_path(artifact)).get('evaluation', {}).get('num_crops', 1)
-    crops = config.get('evaluation', {}).get('num_crops', 1)
-    key = dataset.split if crops == saved_crops else f'{dataset.split}_{crops}crops'
+    saved_protocol = validation_protocol(load_config(config_path(artifact), training=False))
+    protocol = validation_protocol(config)
+    key = dataset.split
+    if protocol != saved_protocol:
+        if protocol['method'] == saved_protocol['method'] == 'fixed':
+            key += f"_{protocol['num_crops']}crops"
+        else:
+            key += f"_{protocol['method']}_{digest(protocol)[:10]}"
     if diagnostic_subset:
         key += f"_subset_{results['keras_fp32']['num_original_files']}"
-    store_result(artifact, 'evaluation', duration, key, results)
+    # Keep shared context once; each format retains measured metrics and sample counts.
+    common = {'class_mapping', 'aggregation', 'trained_parent', 'effective_width', 'run_id',
+              'trained_duration_sec', 'training_duration_secs', 'evaluation_duration_sec',
+              'duration_seen_during_training', 'evaluation_num_crops', 'folds', 'validation_protocol'}
+    store_result(artifact, 'evaluation_context', duration, key,
+                 {**{k: results['keras_fp32'][k] for k in common}, 'audio': config['audio'], 'runtime': stats})
+    include_confusion = config.get('evaluation', {}).get('include_confusion_matrix', False)
+    compact = {fmt: {k: value for k, value in record.items()
+                     if k not in common and (k != 'confusion_matrix' or include_confusion)}
+               for fmt, record in results.items()}
+    fp = results['keras_fp32']['accuracy']
+    compact['comparison'] = {'int8_minus_fp32_accuracy': results['int8_tflite']['accuracy'] - fp if 'int8_tflite' in results else None}
+    store_result(artifact, 'evaluation', duration, key, compact)
+    if dataset.split == 'test' and not diagnostic_subset and protocol == saved_protocol:
+        test = read_report(artifact).get('test') or {}
+        test[duration_token(duration)] = {fmt: {'accuracy': row['accuracy'], 'macro_f1': row['macro_f1']}
+                                        for fmt, row in results.items()}
+        update_report(artifact, test=test)
     return results
 
 
@@ -77,20 +108,25 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model-dir', required=True, type=Path)
     parser.add_argument('--split', choices=['train', 'val', 'test'], default='val')
-    parser.add_argument('--duration', type=int, choices=[1, 2])
+    parser.add_argument('--duration', type=float, choices=SUPPORTED_DURATIONS)
     parser.add_argument('--limit', type=int)
-    parser.add_argument('--num-crops', type=int, help='Deterministic evenly spaced crops; probabilities averaged per original file')
+    parser.add_argument('--set', action='append', default=[], metavar='KEY=VALUE')
+    parser.add_argument('--num-crops', type=int, help='Select fixed evaluation with this many deterministic evenly spaced crops')
     args = parser.parse_args()
     from training.dataset import AudioDataset, SyntheticDataset, load_metadata
     from training.registry import register_artifact
-    for artifact in artifact_directories(args.model_dir):
-        config = load_config(config_path(artifact))
+    artifacts = artifact_directories(args.model_dir)
+    matches_saved_protocol = True
+    for artifact in artifacts:
+        config = load_config(config_path(artifact), args.set, training=False)
         if args.duration:
             config['audio']['duration_sec'] = args.duration
         if args.num_crops is not None:
             if args.num_crops < 1:
                 parser.error('--num-crops must be positive')
             config.setdefault('evaluation', {})['num_crops'] = args.num_crops
+            config['validation']['method'] = 'fixed'
+        matches_saved_protocol &= validation_protocol(config) == validation_protocol(load_config(config_path(artifact), training=False))
         configure_runtime(config)
         meta = read_report(artifact)['metadata']
         synthetic = meta['data_source'] == 'synthetic_smoke_only'
@@ -105,6 +141,13 @@ def main():
                                    synthetic=synthetic, diagnostic_subset=args.limit is not None)
         register_artifact(artifact)
         print(artifact, {k: {'accuracy': v['accuracy'], 'macro_f1': v['macro_f1'], 'data_source': v['data_source']} for k, v in result.items()})
+    if args.split == 'test' and len(artifacts) > 1 and args.limit is None and matches_saved_protocol:
+        child_tests = [read_report(artifact).get('test') or {} for artifact in artifacts]
+        durations = set.intersection(*(set(test) for test in child_tests))
+        aggregate = {d: {fmt: {metric: float(np.mean([test[d][fmt][metric] for test in child_tests]))
+                              for metric in ('accuracy', 'macro_f1')}
+                         for fmt in child_tests[0][d]} for d in durations}
+        update_report(args.model_dir, test=aggregate)
 
 
 if __name__ == '__main__':

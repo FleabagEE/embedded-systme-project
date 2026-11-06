@@ -6,8 +6,8 @@ import hashlib
 from pathlib import Path
 import numpy as np
 
-from training.utils import atomic_write, configure_runtime, duration_token, load_config, export_durations
-from training.artifacts import config_path, read_report, store_result
+from training.utils import atomic_write, configure_runtime, duration_token, load_config, export_durations, digest, SUPPORTED_DURATIONS
+from training.artifacts import config_path, read_report, store_result, finalize_hashes
 
 
 def convert_model(model, representative=None):
@@ -29,7 +29,7 @@ def convert_model(model, representative=None):
 
 def export_artifact(artifact, config, train_dataset, *, duration=None, skip_int8=False):
     import tensorflow as tf
-    from training.dscnn import fix_input_shape, architecture_metadata
+    from training.models import fix_input_shape, architecture_metadata
     from quantization.validate_int8 import TFLiteRunner
     artifact = Path(artifact)
     duration = config['audio']['duration_sec'] if duration is None else duration
@@ -49,20 +49,21 @@ def export_artifact(artifact, config, train_dataset, *, duration=None, skip_int8
         source = SyntheticDataset(cfg, 'train', train_dataset.count)
     else:
         source = AudioDataset(train_dataset.records, cfg, 'train')
-    calibration = [] if skip_int8 else list(source.representative(cfg['quantization']['representative_samples']))
+    formats = [kind for kind in cfg['quantization'].get('formats', ['fp32', 'int8']) if not (skip_int8 and kind == 'int8')]
+    calibration = list(source.representative(cfg['quantization']['representative_samples'])) if 'int8' in formats else []
+    store_result(artifact, 'calibration', duration, 'representative', {
+                  'split': 'train', 'folds': config['dataset']['train_folds'] if not synthetic else [],
+                  'num_samples': len(calibration), 'seed': config['training']['seed'], 'augmentation': False,
+                  'file_ids_sha256': digest([r.file_id for r in source.records[:len(calibration)]]) if not synthetic else None,
+                  'normalization': cfg['audio']['normalization'], 'audio': cfg['audio']})
     provenance = {'run_id': run_meta['run_id'], 'trained_parent': run_meta.get('trained_parent'),
                   'effective_width': run_meta['effective_width'], 'trained_duration_sec': run_meta['trained_duration_sec'],
                   'training_duration_secs': run_meta.get('training_duration_secs', [run_meta['trained_duration_sec']]),
                   'export_duration_sec': duration, 'identical_frozen_weights': True,
                   'data_source': run_meta['data_source'], 'calibration_split': 'train',
-                  'calibration_folds': config['dataset']['train_folds'] if not synthetic else [],
                   'calibration_count': len(calibration),
-                  'calibration_file_ids': [r.file_id for r in source.records[:len(calibration)]] if not synthetic else [],
-                  'calibration_augmentation': False, 'frontend': cfg['audio'],
                   'frozen_weight_sha256': hashlib.sha256(b''.join(w.tobytes() for w in fixed.get_weights())).hexdigest()}
-    for kind in ('fp32', 'int8'):
-        if kind == 'int8' and skip_int8:
-            continue
+    for kind in formats:
         try:
             content = convert_model(fixed, calibration if kind == 'int8' else None)
             runner = TFLiteRunner(model_content=content, require_int8=kind == 'int8')
@@ -73,25 +74,31 @@ def export_artifact(artifact, config, train_dataset, *, duration=None, skip_int8
                 raise ValueError(f'Invalid interpreter output: {output.shape}')
             details.update(provenance)
             details.update({'cpu_invocation_success': True, 'byte_size': len(content),
+                            'filename': str((target / f'{kind}.tflite').relative_to(artifact)),
+                            'sha256': hashlib.sha256(content).hexdigest(),
                             'architecture': architecture_metadata(fixed, config, run_meta['effective_width'], duration)})
+            from quantization.operators import audit_operators
+            details['micro_compatibility'] = audit_operators(runner)
             atomic_write(target / f'{kind}.tflite', content)
             store_result(artifact, 'exports', duration, kind, details)
         except Exception as exc:
             store_result(artifact, 'exports', duration, f'{kind}_conversion_error', {'type': type(exc).__name__, 'message': str(exc), **provenance})
             raise RuntimeError(f'{kind} conversion failed for {artifact} at {duration}s: {exc}') from exc
+    finalize_hashes(artifact)
     return target
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model-dir', required=True, type=Path)
-    parser.add_argument('--duration', type=int, choices=[1, 2])
+    parser.add_argument('--duration', type=float, choices=SUPPORTED_DURATIONS)
+    parser.add_argument('--set', action='append', default=[], metavar='KEY=VALUE')
     args = parser.parse_args()
     from evaluation.evaluate import artifact_directories
     from training.dataset import AudioDataset, SyntheticDataset, load_metadata
     from training.registry import register_artifact
     for artifact in artifact_directories(args.model_dir):
-        config = load_config(config_path(artifact))
+        config = load_config(config_path(artifact), args.set, training=False)
         configure_runtime(config)
         meta = read_report(artifact)['metadata']
         if meta['data_source'] == 'synthetic_smoke_only':

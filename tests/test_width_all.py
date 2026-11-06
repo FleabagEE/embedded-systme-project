@@ -48,7 +48,7 @@ class SharedWidthTests(unittest.TestCase):
                 for b, reference in zip(model.blocks, references):
                     self.assertIs(b.kernel, reference)
                 frozen = model.freeze(w)
-                for frames in (98, 198):
+                for frames in (98, 148, 198):
                     probe = tf.random.normal([2, frames, 40, 1])
                     np.testing.assert_allclose(model(probe, width=w).numpy(), frozen(probe).numpy(), atol=1e-5, rtol=1e-5)
                 self.assertFalse(any(isinstance(layer, tf.keras.layers.BatchNormalization) for layer in frozen.layers))

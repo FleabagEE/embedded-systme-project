@@ -12,23 +12,29 @@ def softmax(logits):
     return z / z.sum(axis=-1, keepdims=True)
 
 
-def classification_metrics(labels, logits, file_ids, class_mapping, split, synthetic=False):
+def classification_metrics(labels, logits, file_ids, class_mapping, split, synthetic=False, from_logits=True,
+                           aggregation='mean_probability'):
+    if aggregation not in ('mean_probability', 'max_probability'):
+        raise ValueError('Unsupported probability aggregation')
     if len(labels) != len(logits) or len(labels) != len(file_ids) or not len(labels):
         raise ValueError('Nonempty labels, logits and original file IDs must have equal length')
     groups = {}
-    for label, probability, file_id in zip(labels, softmax(logits), file_ids):
+    probabilities = softmax(logits) if from_logits else np.asarray(logits)
+    for label, probability, file_id in zip(labels, probabilities, file_ids):
         if file_id not in groups:
             groups[file_id] = [int(label), []]
         if groups[file_id][0] != int(label):
             raise ValueError(f'Conflicting labels for original file {file_id}')
         groups[file_id][1].append(probability)
     truth = [g[0] for g in groups.values()]
-    pred = [int(np.argmax(np.mean(g[1], axis=0))) for g in groups.values()]
+    reduce = np.mean if aggregation == 'mean_probability' else np.max
+    pred = [int(np.argmax(reduce(g[1], axis=0))) for g in groups.values()]
     all_labels = list(range(len(class_mapping)))
     return {'accuracy': float(accuracy_score(truth, pred)),
             'macro_f1': float(f1_score(truth, pred, labels=all_labels, average='macro', zero_division=0)),
             'confusion_matrix': confusion_matrix(truth, pred, labels=all_labels).tolist(),
             'split': split, 'num_original_files': len(groups), 'num_crops': len(labels),
-            'aggregation': AGGREGATION, 'class_mapping': class_mapping,
+            'aggregation': AGGREGATION if aggregation == 'mean_probability' else 'Maximum class probabilities across windows of each original file, then take argmax.',
+            'class_mapping': class_mapping,
             'data_source': 'synthetic_smoke_only' if synthetic else 'UrbanSound8K',
             'empirical_dataset_result': not synthetic}
