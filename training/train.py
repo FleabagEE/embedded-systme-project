@@ -5,6 +5,7 @@ import copy
 import csv
 import hashlib
 import io
+import json
 from pathlib import Path
 import tempfile
 import time
@@ -22,7 +23,7 @@ def parser():
     result.add_argument('--config', default='config.yaml')
     result.add_argument('--set', action='append', default=[], metavar='KEY=VALUE')
     result.add_argument('--run-id', help='Optional human label; experiment directories still use unique sequence numbers')
-    result.add_argument('--sequence-start', type=int, help='Allocate globally across architectures, at or above this number')
+    result.add_argument('--check-config', action='store_true', help='Print resolved configuration and shapes without training or allocating a run')
     result.add_argument('--skip-completed', action='store_true', help='Skip a matching completed experiment with verified artifacts')
     result.add_argument('--dry-run', '--smoke-test', dest='dry_run', action='store_true',
                         help='One synthetic waveform epoch plus actual exports; never empirical accuracy')
@@ -81,7 +82,7 @@ def validate_epoch(model, dataset, config, widths, classes, synthetic, validatio
     return row
 
 
-def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, skip_completed=False, sequence_start=None):
+def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, skip_completed=False):
     from training.registry import create_run, find_completed, experiment_key, write_summary
     config = copy.deepcopy(config)
     config['audio']['duration_sec'] = training_durations(config)[0]
@@ -93,13 +94,15 @@ def train(config, *, dry_run=False, limit=None, run_id=None, skip_int8=False, sk
     if skip_completed and (completed := find_completed(config, dry_run, limit)):
         print(f'Skipped completed experiment: {completed}', flush=True)
         return completed
-    run = create_run(config, run_id, sequence_start=sequence_start)
+    run = create_run(config, run_id)
     source = 'synthetic_smoke_only' if dry_run else 'UrbanSound8K'
     from training.models import model_metadata
     update_report(run, model=model_metadata(config), configuration_hash=experiment_key(config, dry_run, limit), seed=config['training']['seed'],
                   software_versions=software_versions(), data_source=source,
                   state={**read_report(run)['state'], 'status': 'training', 'started_at': utc_now()})
     print(f'Run: {run}', flush=True)
+    print(f"Training config: architecture={config['model'].get('architecture', 'dscnn')}; "
+          f"Log-Mel={config['audio']['n_mels']}; widths={selected_widths(config)}; durations={training_durations(config)}", flush=True)
     tf = None
     try:
         tf = configure_runtime(config)
@@ -294,8 +297,13 @@ def _train(config, tf, *, run, work, dry_run=False, limit=None, skip_int8=False)
 
 def main():
     args = parser().parse_args()
-    train(load_config(args.config, args.set), dry_run=args.dry_run, limit=args.limit,
-          run_id=args.run_id, skip_int8=args.skip_int8, skip_completed=args.skip_completed, sequence_start=args.sequence_start)
+    config = load_config(args.config, args.set)
+    if args.check_config:
+        from training.utils import config_summary
+        print(json.dumps({'config_path': str(Path(args.config).resolve()), **config_summary(config)}, indent=2))
+        return
+    train(config, dry_run=args.dry_run, limit=args.limit,
+          run_id=args.run_id, skip_int8=args.skip_int8, skip_completed=args.skip_completed)
 
 
 if __name__ == '__main__':

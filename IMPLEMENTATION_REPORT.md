@@ -37,29 +37,28 @@ concat/reduce-max scale constraints. Exported input batch and temporal dimension
 are fixed. Firmware/operator-version validation and ESP-NN acceleration, SRAM,
 latency and physical board execution remain unverified.
 
+Normal training cleanup: 128-Mel support is shared by configuration validation,
+Colab single/batch controls and the default Cartesian search space. Numeric string
+and integral float form values normalize to integer counts before constructing
+features and models. A cheap --check-config path validates actual backend settings
+before any experiment allocation; the regular notebook runs this automatically
+and surfaces mismatched checkout/configuration errors before training.
+
+The dedicated preset controller, preset file, ordered-run handling and special
+starting-number options were removed. General model/export tests were retained
+under test_mel128.py and extended to DS-CNN SC/DW and MobileNet SC/DW 128-Mel
+exports. Interrupted configurations can be rerun individually or from report.json
+under a new per-architecture ID; existing completed artifacts are not modified.
+Partial optimizer-state resumption remains unsupported.
+
+Verification after cleanup: 69 tests passed in tinyml-tf. The ordinary CLI also
+completed a synthetic CPU epoch using the default MobileNet-DW architecture,
+128 Mel bins, all shared widths and 1/2-second inputs, saving the shared checkpoint,
+three Keras subnets and twelve loadable/invokable FP32/INT8 TFLite exports. An older
+resolved report configuration remained readable after removing its controller.
+No completed user experiment files were changed, and no CUDA training was tested.
+
 Verification commands:
-
-The seven-baseline queue adds an ordered preset file and one Colab controller
-cell. Its defaults match the supplied baseline screenshot: max pooling, mixed
-1/2-second training, all widths, fixed validation, seed 42, 50 epochs and batch
-size 64. Three DS-CNN and four MobileNet presets pair Mel 64/128 with frequency
-mask maxima 4/8. `model.mobile_spatial_conv=SC` explicitly replaces the MobileNet
-3x3 depthwise layer with a standard 3x3 convolution as an ablation; the default and
-missing-key behavior remain DW for old models. Shared prefix slicing, switchable
-BN, subnet extraction, analytical MACs and export handle both variants.
-
-`--sequence-start 7` enables global numbering across architectures, with locking
-and durable reservations; normal runs retain per-architecture numbering. Ordered
-sweeps reuse the existing CLI, preview without allocating IDs, finalize each run
-incrementally, continue experiment failures and skip verified completed runs.
-The queue defaults to preview; enable run_baseline_queue to start training.
-
-Verification for this addition: 69 tests passed in tinyml-tf, covering 128-Mel
-features, SC/DW regression, MobileNet-SC shared gradients/freeze/serialization,
-actual 128-Mel CPU training and FP32/INT8 export/invocation, concurrent global
-allocation, ordered failure/skip behavior, and Colab preview/launch controls.
-These are small diagnostic runs, not seven complete 50-epoch experiments or
-evidence of accuracy improvement. CUDA and physical MCU deployment remain untested.
 
 Sliding-window validation extension: the canonical config and Colab now default
 to deterministic full-clip sliding windows, stride 0.5 seconds and mean probability

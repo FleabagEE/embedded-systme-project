@@ -7,7 +7,7 @@ dataset:
 audio:
   sample_rate: 16000
   duration_sec: 1.0
-  n_mels: 64
+  n_mels: 64 # Supported Log-Mel resolutions: 40, 64, 128.
   frame_length_ms: 25
   hop_length_ms: 10
   fft_length: 512

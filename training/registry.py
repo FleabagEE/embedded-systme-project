@@ -52,11 +52,9 @@ FIELDS = ['run_id', 'canonical_name', 'duration_sec', 'n_mels', 'conv_type', 're
           'diagnostic_subset', 'validation_num_original_files', 'training_duration_secs']
 
 
-def create_run(config, run_id=None, *, sequence_start=None):
+def create_run(config, run_id=None):
     """Durable reservations + atomic mkdir prevent reuse, even after a failed/deleted run."""
     from training.artifacts import utc_now, update_report, report_lock
-    if sequence_start is not None and (type(sequence_start) is not int or sequence_start < 1):
-        raise ValueError('sequence_start must be a positive integer')
     architecture = config['model'].get('architecture', 'dscnn').lower()
     if not re.fullmatch(r'[a-z][a-z0-9_-]*', architecture):
         raise ValueError('architecture must be a safe lowercase name')
@@ -67,10 +65,10 @@ def create_run(config, run_id=None, *, sequence_start=None):
     # reservations still protect IDs after failed or deleted experiments.
     with report_lock(reservations).open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        pattern = re.compile((re.escape(architecture) if sequence_start is None else r'[a-z][a-z0-9_-]*') + r'_(\d+)$')
+        pattern = re.compile(re.escape(architecture) + r'_(\d+)$')
         used = [int(match.group(1)) for folder in (root, reservations) for p in folder.iterdir()
                 if (match := pattern.fullmatch(p.name))]
-        sequence = max(max(used, default=0) + 1, sequence_start or 1)
+        sequence = max(used, default=0) + 1
         while True:
             name = f'{architecture}_{sequence:03d}'
             try:
@@ -85,8 +83,7 @@ def create_run(config, run_id=None, *, sequence_start=None):
                 sequence += 1
                 continue
             update_report(run, schema_version=4, centralized_artifacts=True, experiment={'id': name, 'sequence': sequence,
-                          'architecture': architecture, 'label': run_id,
-                          'sequence_policy': 'global' if sequence_start is not None else 'architecture'}, config=config,
+                          'architecture': architecture, 'label': run_id}, config=config,
                           seed=config['training']['seed'], software_versions=software_versions(),
                           state={'status': 'allocated', 'created_at': utc_now()},
                           validation=None, test=None, failure=None, file_hashes={})

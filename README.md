@@ -30,6 +30,75 @@ selection happens before initialization; restart Python when changing devices or
 determinism. No alternate GPU backend is used. A tiny throwaway optimizer step
 checks actual output/gradient placement and resets the experiment seed afterwards.
 
+## Log-Mel configuration and rerunning one experiment
+
+The ordinary single-training and Cartesian batch paths support **40, 64 and 128**
+Mel bins. The notebook dropdown, batch choices, `configs/search_space.yaml` and
+backend validation include 128. Numeric form values such as `128`, `128.0` and
+`"128"` resolve to the same integer count before feature/model construction.
+Unsupported or fractional counts fail with an explicit `audio.n_mels` error.
+
+The regular notebook launch first calls the selected CLI with `--check-config`.
+It validates inputs without allocating an experiment, loading data, starting
+TensorFlow or exporting a model, then prints the actual backend source path,
+resolved Mel bins/input shapes (single mode), or validated batch configuration
+count and Mel choices. Actual training also logs its resolved Log-Mel count.
+The single-run check prints augmentation and FrequencyMask settings, making a
+128-Mel / mask-8 setup visible before training.
+
+```sh
+# Inspect the actual backend and resolved 128-Mel shapes before training.
+"$PY" -m training.train --check-config --set audio.n_mels=128 \
+  --set model.architecture=mobilenetv2 --set model.mobile_spatial_conv=DW \
+  --set 'training.duration_secs=[1,2]'
+"$PY" -m training.sweep --check-config --space configs/search_space.yaml
+```
+
+If an open Colab form still has only 40/64, open the latest branch notebook and
+rerun its branch setup cell. Pulling source code updates the checkout but does not
+replace cells already open in a separate Colab notebook. Adding a dropdown entry
+alone cannot update an older backend. The launch check now fails before training
+with the backend error and a setup hint when this mismatch occurs. No automatic
+reset of local edits is performed.
+
+To rerun just the last unfinished configuration using ordinary controls, choose:
+
+```text
+experiment_mode: single
+architecture: MobileNetV2-Tiny
+mobile_spatial_conv: DW
+mel_bins: 128
+pooling: max
+width_multiplier: all
+training_duration: mixed
+mixed_durations: [1.0, 2.0]
+validation_method: fixed
+seed: 42
+epochs: 50
+batch_size: 64
+```
+
+In **Data augmentation config**, choose `custom`, keep augmentation enabled and
+set `frequency_mask_max_bins=8` (with FrequencyMask enabled). The custom fields
+apply only in custom mode; changing them while `augmentation_config=config.yaml`
+is selected continues to use YAML values. Rerun both the augmentation and
+Experiment controls cells before the regular Train cell. Each new run gets a
+fresh per-architecture number; existing reports, reservations and weights remain
+intact. This reruns the configuration from initialization, not a partial optimizer
+checkpoint. Do not launch a whole batch if only one configuration remains.
+
+For exact saved settings, the CLI can also read the resolved configuration from
+an existing experiment report, including an interrupted report:
+
+```sh
+"$PY" -m training.train --config /path/to/models/mobilenetv2_013/report.json \
+  --set dataset.root=/path/to/urbansound8k --set runtime.output_dir=/path/to/models
+```
+
+The dedicated multi-baseline controller and its preset file have been removed;
+ordinary single/batch training, MobileNet SC/DW ablations, mixed durations, model
+exports and legacy report reading remain available.
+
 ## Data, durations, and checkpoint selection
 
 Dataset root is independent of the output root:
@@ -396,69 +465,6 @@ Global `MEAN`, `REDUCE_MAX` and `CONCATENATION` should be budgeted as reference
 kernels, without assuming ESP-NN acceleration. Physical MCU/operator/arena
 compatibility still needs board-specific validation;
 no firmware, timing/energy or accuracy results are invented.
-
-## Seven-baseline sequential queue
-
-The notebook adds **Seven baseline queue — start at 007**. Run the setup/data and
-Data augmentation config cells, then use this queue cell in place of the ordinary
-single/batch launch cell. It prints a validated plan without training by default.
-Set `run_baseline_queue=True` and run it to launch the seven presets in order.
-`queue_start_sequence=7`, `queue_epochs=50`, `queue_batch_size=64` and
-`queue_skip_completed=True` are editable Colab controls. The queue does not depend
-on the ordinary Experiment controls cell's current model/training choices.
-
-The source of truth is `configs/baseline_queue.yaml`:
-
-| Expected ID* | Architecture | Spatial convolution | Mel bins | FrequencyMask max bins |
-| --- | --- | --- | ---: | ---: |
-| dscnn_007 | DS-CNN | SC | 128 | 8 |
-| dscnn_008 | DS-CNN | DW | 64 | 4 |
-| dscnn_009 | DS-CNN | DW | 128 | 8 |
-| mobilenetv2_010 | MobileNetV2 SC ablation | SC | 64 | 4 |
-| mobilenetv2_011 | MobileNetV2 SC ablation | SC | 128 | 8 |
-| mobilenetv2_012 | MobileNetV2-Tiny | DW | 64 | 4 |
-| mobilenetv2_013 | MobileNetV2-Tiny | DW | 128 | 8 |
-
-Common settings reproduce the supplied baseline: max pooling, standard stem,
-width=all, mixed `[1.0,2.0]` seconds, expansion ratio 3, all shared widths (sandwich
-random width count 1), no BN recalibration, fixed three-crop mean-probability
-validation, seed 42, deterministic runtime, 50 epochs and batch size 64. Both
-FP32/INT8 and both durations are exported. Augmentation and FrequencyMask are
-explicitly enabled; other augmentation parameters inherit the augmentation cell,
-while each preset fixes its own FrequencyMask size. FrequencyMask probability is
-unchanged. `audio.n_mels` and the regular Colab Mel selector now support 128 in
-addition to 40/64.
-
-*IDs above assume no existing reservations at 007 or higher and no skipped
-configurations. `--sequence-start 7` opts into globally increasing numbers across
-architectures, using process locking and durable reservations. It takes the next
-number greater than all allocated IDs, with a minimum of 007; it never renames or
-overwrites existing runs. Failed/deleted runs still consume their IDs. Ordinary
-training without this flag keeps the existing per-architecture numbering.
-
-Each preset starts a fresh training subprocess, finalizes its report/artifacts
-incrementally and updates summary.csv. Experiment-level failures are recorded and
-later presets continue. Rerunning with skip-completed checks configuration/source
-identity and model hashes, skips completed entries, and retries failed entries
-under new IDs. Keyboard interruption stops the queue; no promise is made that a
-Colab runtime will remain alive while unattended. Already finalized Drive outputs
-remain available after runtime loss. The summary cell displays final results and
-paths; host/MCU measurements are not added by the queue.
-
-```sh
-# Validate the complete plan, with no training and no number reservations.
-"$PY" -m training.sweep --space configs/baseline_queue.yaml --preview
-
-# Run the seven exact presets using the existing trainer.
-"$PY" -m training.sweep --space configs/baseline_queue.yaml \
-  --sequence-start 7 --skip-completed
-```
-
-The sweep CLI now accepts either the existing Cartesian `parameters` mapping or an
-ordered `experiments` list with `name` and dotted-key `overrides`. Optional `defaults`
-are applied before CLI overrides, then each entry applies its own overrides. This
-keeps presets paired (for example 128 Mel with mask 8), without accidentally taking
-a Cartesian product. Colab paths stay independent of the preset source file.
 
 ## Google Colab
 

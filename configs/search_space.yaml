@@ -1,7 +1,7 @@
 # Cartesian product; choices override the canonical configuration.
 base_config: config.yaml
 parameters:
-  audio.n_mels: [40, 64]
+  audio.n_mels: [40, 64, 128]
   model.conv_type: [SC, DW]
   model.width: ['1', '5', '25', all]
   training.duration_secs: [[1.0], [1.5], [2.0]]

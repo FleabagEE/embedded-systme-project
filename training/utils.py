@@ -18,6 +18,7 @@ import yaml
 
 WIDTHS = {'1': 1.0, '5': 0.5, '25': 0.25}
 SUPPORTED_DURATIONS = (1.0, 1.5, 2.0)
+SUPPORTED_MEL_BINS = (40, 64, 128)
 VALIDATION_DEFAULTS = {'method': 'fixed', 'stride_seconds': 0.5, 'aggregation': 'mean_probability',
                        'batch_size': 32, 'include_last_window': True, 'short_clip_padding': 'zero',
                        'cache_features': True}
@@ -83,6 +84,20 @@ def export_durations(config):
     return q.get('output_duration_secs') or ([q['output_duration_sec']] if 'output_duration_sec' in q else training_durations(config))
 
 
+def config_summary(config):
+    """Resolved settings for a cheap CLI check; no TensorFlow/device/data loading."""
+    from training.features import feature_shape
+    m = config['model']
+    return {'backend_source': str(Path(__file__).resolve()), 'supported_mel_bins': list(SUPPORTED_MEL_BINS),
+            'architecture': m.get('architecture', 'dscnn'),
+            'spatial_conv': m.get('mobile_spatial_conv', 'DW') if m.get('architecture') == 'mobilenetv2' else m['conv_type'],
+            'n_mels': config['audio']['n_mels'], 'widths': selected_widths(config),
+            'durations': training_durations(config), 'pooling': m.get('pooling', 'avg'),
+            'feature_shapes': {duration_token(d): list(feature_shape(config['audio'], d)) for d in training_durations(config)},
+            'validation': validation_protocol(config), 'augmentation_enabled': config['augmentation']['enabled'],
+            'frequency_mask': config['augmentation'].get('spectrogram', {}).get('FrequencyMask')}
+
+
 def run_duration_token(config):
     return '_'.join(duration_token(d) for d in training_durations(config))
 
@@ -122,9 +137,19 @@ def validate_config(c, *, training=True):
     if not isinstance(c, dict) or any(not isinstance(c.get(key), dict) for key in sections):
         raise ValueError(f'Configuration needs mappings for: {", ".join(sections)}')
     a, m, t, q = (c[k] for k in ('audio', 'model', 'training', 'quantization'))
+    # Notebook forms/JSON overrides can supply a numeric choice as text.
+    mel_bins = a['n_mels']
+    if isinstance(mel_bins, str):
+        try:
+            mel_bins = float(mel_bins.strip())
+        except ValueError:
+            mel_bins = None
+    if type(mel_bins) not in (int, float) or mel_bins not in SUPPORTED_MEL_BINS:
+        raise ValueError(f'audio.n_mels must be one of {SUPPORTED_MEL_BINS}; received {a["n_mels"]!r}')
+    a['n_mels'] = int(mel_bins)
     m['width'] = width_token(m['width'])
-    if a['sample_rate'] != 16000 or a['duration_sec'] not in SUPPORTED_DURATIONS or a['n_mels'] not in (40, 64, 128):
-        raise ValueError('Use 16000 Hz, duration_sec 1/1.5/2, and n_mels 40/64/128')
+    if a['sample_rate'] != 16000 or a['duration_sec'] not in SUPPORTED_DURATIONS:
+        raise ValueError('Use 16000 Hz and duration_sec 1/1.5/2')
     if m['conv_type'] not in ('SC', 'DW') or not m['global_average_pooling'] or m.get('pooling', 'avg') not in ('avg', 'max', 'mix'):
         raise ValueError('Use SC/DW, global pooling, and pooling=avg/max/mix')
     if m['num_blocks'] != len(m['base_channels']) or not m['base_channels'] or any(type(x) is not int or x < 1 for x in m['base_channels']):

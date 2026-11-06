@@ -50,7 +50,7 @@ class ExtendedModelTests(unittest.TestCase):
 
     def test_mobile_all_widths_pools_durations_static_equivalence(self):
         for pool in ('avg','max','mix'):
-            for mels in (40,64):
+            for mels in (40,64,128):
                 c = mobile_config(); c['model']['pooling'] = pool; c['audio']['n_mels'] = mels
                 shared = build_shared_model(c)
                 params = []

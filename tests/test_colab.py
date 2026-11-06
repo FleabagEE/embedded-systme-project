@@ -39,7 +39,7 @@ class ColabTests(unittest.TestCase):
         launch = next(text for text in sources if text.startswith('#@title Train through the repository CLI'))
         for mode in ('single', 'batch'):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
-                run = Mock(return_value=SimpleNamespace(returncode=0))
+                run = Mock(return_value=SimpleNamespace(returncode=0, stdout='{}', stderr=''))
                 namespace = {'json': json, 'DATASET_ROOT': Path(tmp)/'data', 'OUTPUT_ROOT': Path(tmp)/'models'}
                 exec(augmentation, namespace)
                 exec(experiment, namespace)
@@ -82,7 +82,7 @@ class ColabTests(unittest.TestCase):
                 for mode in ('single','batch'):
                     with self.subTest(architecture=architecture,pooling=pooling,mode=mode), tempfile.TemporaryDirectory() as tmp:
                         local_controls = controls.replace("architecture = 'DS-CNN'",f'architecture = {architecture!r}').replace("pooling = 'avg'",f'pooling = {pooling!r}')
-                        run = Mock(return_value=SimpleNamespace(returncode=0))
+                        run = Mock(return_value=SimpleNamespace(returncode=0, stdout='{}', stderr=''))
                         ns = {'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models'}
                         exec(local_controls,ns)
                         ns.update(experiment_mode=mode,augmentation_overrides={'augmentation.enabled':True},
@@ -114,7 +114,7 @@ class ColabTests(unittest.TestCase):
                     source = controls.replace("validation_method = 'sliding_window'",f'validation_method = {method!r}')
                     source = source.replace("validation_stride = 0.5",'validation_stride = 0.25')
                     source = source.replace("validation_aggregation = 'mean_probability'",f'validation_aggregation = {aggregation!r}')
-                    run = Mock(return_value=SimpleNamespace(returncode=0))
+                    run = Mock(return_value=SimpleNamespace(returncode=0, stdout='{}', stderr=''))
                     ns={'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models'}
                     exec(source,ns)
                     ns.update(experiment_mode=mode,augmentation_overrides={'augmentation.enabled':True},TRAINING_PYTHON='python',
@@ -127,28 +127,51 @@ class ColabTests(unittest.TestCase):
                     self.assertEqual(settings['stride_seconds'],.25)
                     self.assertEqual(settings['aggregation'],aggregation)
 
-    def test_baseline_queue_cell_previews_and_launches_existing_sweep_cli(self):
-        source = next(s for s in self.notebook_sources() if s.startswith('#@title Seven baseline queue'))
-        for execute in (False,True):
-            with self.subTest(execute=execute),tempfile.TemporaryDirectory() as tmp:
-                local = source.replace('run_baseline_queue = False',f'run_baseline_queue = {execute}')
-                run = Mock(return_value=SimpleNamespace(returncode=0,stdout='[]'))
-                ns = {'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models',
-                      'augmentation_overrides':{'augmentation.enabled':False,'augmentation.waveform.PitchShift.probability':.3},
-                      'TRAINING_PYTHON':'python','REPO_DIR':tmp,'TRAIN_ENV':{},'subprocess':SimpleNamespace(run=run),'print':lambda *a,**k:None}
+
+    def test_mel128_regular_single_and_batch_commands_are_prechecked(self):
+        import ast
+        from training.utils import load_config, SUPPORTED_MEL_BINS
+        sources=self.notebook_sources()
+        controls=next(s for s in sources if s.startswith('#@title Experiment controls'))
+        launch=next(s for s in sources if s.startswith('#@title Train through the repository CLI'))
+        choices=next(line for line in controls.splitlines() if line.startswith('mel_bins =')).split('#@param',1)[1]
+        self.assertEqual(ast.literal_eval(choices.strip()),list(SUPPORTED_MEL_BINS))
+        import yaml
+        self.assertIn(128,yaml.safe_load(Path('configs/search_space.yaml').read_text())['parameters']['audio.n_mels'])
+        for mode in ('single','batch'):
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as tmp:
+                local=controls.replace('mel_bins = 64','mel_bins = "128"').replace("architecture = 'DS-CNN'","architecture = 'MobileNetV2-Tiny'")
+                run=Mock(return_value=SimpleNamespace(returncode=0,stdout='{"n_mels":128}',stderr=''))
+                ns={'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models'}
                 exec(local,ns)
-                self.assertEqual(run.call_count,2 if execute else 1)
-                preview=run.call_args_list[0].args[0]
-                self.assertIn('--preview',preview)
-                self.assertEqual(preview[preview.index('--space')+1],'configs/baseline_queue.yaml')
-                self.assertEqual(preview[preview.index('--sequence-start')+1],'7')
-                settings=dict(preview[i+1].split('=',1) for i,v in enumerate(preview) if v=='--set')
-                self.assertEqual(json.loads(settings['training.epochs']),50)
-                self.assertEqual(json.loads(settings['training.batch_size']),64)
-                self.assertTrue(json.loads(settings['augmentation.enabled']))
-                self.assertEqual(json.loads(settings['augmentation.waveform.PitchShift.probability']),.3)
-                if execute:
-                    launched=run.call_args_list[1].args[0]
-                    self.assertNotIn('--preview',launched)
-                    self.assertIn('--skip-completed',launched)
-                    self.assertIn('training.sweep',launched)
+                self.assertIn(128,ns['mel_bin_choices'])
+                ns.update(experiment_mode=mode,TRAINING_PYTHON='python',REPO_DIR=tmp,TRAIN_ENV={},
+                    augmentation_overrides={'augmentation.enabled':True,'augmentation.spectrogram.FrequencyMask.max_bins':8},
+                    subprocess=SimpleNamespace(run=run),Path=lambda *_:Path(tmp)/'sweep.json',print=lambda *a:None)
+                exec(launch,ns)
+                self.assertEqual(run.call_count,2)
+                check,train=[call.args[0] for call in run.call_args_list]
+                self.assertEqual(check,train+['--check-config'])
+                overrides=[train[i+1] for i,v in enumerate(train) if v=='--set']
+                c=load_config('config.yaml',overrides)
+                self.assertEqual(c['augmentation']['spectrogram']['FrequencyMask']['max_bins'],8)
+                if mode=='single': self.assertEqual(c['audio']['n_mels'],128)
+                else: self.assertIn(128,json.loads((Path(tmp)/'sweep.json').read_text())['parameters']['audio.n_mels'])
+
+    def test_backend_check_failure_stops_before_training(self):
+        sources=self.notebook_sources()
+        controls=next(s for s in sources if s.startswith('#@title Experiment controls'))
+        launch=next(s for s in sources if s.startswith('#@title Train through the repository CLI'))
+        with tempfile.TemporaryDirectory() as tmp:
+            run=Mock(return_value=SimpleNamespace(returncode=2,stdout='',stderr='unrecognized arguments: --check-config'))
+            ns={'json':json,'DATASET_ROOT':Path(tmp)/'data','OUTPUT_ROOT':Path(tmp)/'models'}
+            exec(controls,ns)
+            ns.update(TRAINING_PYTHON='python',REPO_DIR=tmp,TRAIN_ENV={},augmentation_overrides={},subprocess=SimpleNamespace(run=run))
+            with self.assertRaisesRegex(RuntimeError,'latest notebook'):
+                exec(launch,ns)
+            self.assertEqual(run.call_count,1)
+
+    def test_only_regular_training_controls_remain(self):
+        sources=self.notebook_sources()
+        self.assertFalse(any('Seven baseline queue' in s for s in sources))
+        self.assertFalse(Path('configs/baseline_queue.yaml').exists())
